@@ -50,7 +50,7 @@ fi
 git config user.name "${GIT_USER_NAME:-feng}"
 git config user.email "${GIT_USER_EMAIL:-460708473@qq.com}"
 
-git add README.md .github/workflows/build-xg040gmd.yml scripts/create_repo_and_push.sh
+git add README.md .github/workflows/build-xg040gmd.yml scripts/create_repo_and_push.sh local_packages
 git commit -m "Add XG-040G-MD OpenWrt GitHub Actions build" || true
 git branch -M main
 

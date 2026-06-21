@@ -40,6 +40,19 @@ on:
           CONFIG_PACKAGE_luci-proto-ipv6=y
           CONFIG_PACKAGE_luci-proto-ppp=y
           CONFIG_PACKAGE_luci-theme-bootstrap=y
+          CONFIG_PACKAGE_luci-theme-argon=y
+          CONFIG_PACKAGE_luci-app-wechatpush=y
+          CONFIG_PACKAGE_luci-i18n-wechatpush-zh-cn=y
+          CONFIG_PACKAGE_luci-app-passwall=y
+          CONFIG_PACKAGE_luci-i18n-passwall-zh-cn=y
+          CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y
+          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Geoview=y
+          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy=y
+          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=y
+          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=y
+          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
+          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y
+          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=y
           CONFIG_PACKAGE_uhttpd=y
           CONFIG_PACKAGE_uhttpd-mod-ubus=y
           CONFIG_PACKAGE_openssl-util=y
@@ -53,6 +66,37 @@ on:
           CONFIG_PACKAGE_ip-full=y
           CONFIG_PACKAGE_jq=y
           CONFIG_PACKAGE_jsonfilter=y
+          CONFIG_PACKAGE_bash=y
+          CONFIG_PACKAGE_iputils-arping=y
+          CONFIG_PACKAGE_luci-compat=y
+          CONFIG_PACKAGE_luci-lib-jsonc=y
+          CONFIG_PACKAGE_luci-lua-runtime=y
+          CONFIG_PACKAGE_coreutils=y
+          CONFIG_PACKAGE_coreutils-base64=y
+          CONFIG_PACKAGE_coreutils-nohup=y
+          CONFIG_PACKAGE_coreutils-timeout=y
+          CONFIG_PACKAGE_libuci-lua=y
+          CONFIG_PACKAGE_lua=y
+          CONFIG_PACKAGE_lyaml=y
+          CONFIG_PACKAGE_dnsmasq-full=y
+          CONFIG_PACKAGE_chinadns-ng=y
+          CONFIG_PACKAGE_dns2socks=y
+          CONFIG_PACKAGE_microsocks=y
+          CONFIG_PACKAGE_ipt2socks=y
+          CONFIG_PACKAGE_tcping=y
+          CONFIG_PACKAGE_haproxy=y
+          CONFIG_PACKAGE_geoview=y
+          CONFIG_PACKAGE_sing-box=y
+          CONFIG_PACKAGE_xray-core=y
+          CONFIG_PACKAGE_shadowsocks-rust-sslocal=y
+          CONFIG_PACKAGE_simple-obfs-client=y
+          CONFIG_PACKAGE_v2ray-plugin=y
+          CONFIG_PACKAGE_kmod-nft-socket=y
+          CONFIG_PACKAGE_kmod-nft-tproxy=y
+          CONFIG_PACKAGE_kmod-nft-nat=y
+          CONFIG_PACKAGE_kmod-inet-diag=y
+          CONFIG_PACKAGE_kmod-netlink-diag=y
+          CONFIG_PACKAGE_kmod-tun=y
           CONFIG_PACKAGE_smartdns=y
           CONFIG_PACKAGE_ttyd=y
           CONFIG_PACKAGE_zerotier=y
@@ -104,6 +148,17 @@ jobs:
           git merge --no-ff --no-edit "pr-${{ github.event.inputs.pr_id }}"
           git log --oneline -5
 
+      - name: Copy local custom packages
+        run: |
+          cd openwrt
+          mkdir -p package/custom
+          cp -a ../local_packages/luci-theme-argon package/custom/luci-theme-argon
+          cp -a ../local_packages/luci-app-wechatpush package/custom/luci-app-wechatpush
+          cp -a ../local_packages/openwrt-passwall/luci-app-passwall package/custom/luci-app-passwall
+          cp -a ../local_packages/openwrt-passwall-packages/. package/custom/
+          echo "===== local custom packages ====="
+          find package/custom -maxdepth 2 -name Makefile | sort
+
       - name: Update feeds
         run: |
           cd openwrt
@@ -121,7 +176,7 @@ jobs:
           echo "===== target profile check ====="
           grep -E 'CONFIG_TARGET_airoha|CONFIG_TARGET.*xg|CONFIG_TARGET.*nokia|CONFIG_TARGET.*040' .config || true
           echo "===== luci/package check ====="
-          grep -E 'CONFIG_PACKAGE_luci|CONFIG_PACKAGE_smartdns|CONFIG_PACKAGE_ttyd|CONFIG_PACKAGE_zerotier|CONFIG_PACKAGE_ddns|CONFIG_PACKAGE_bind|CONFIG_PACKAGE_resolveip|CONFIG_PACKAGE_ip-full|CONFIG_PACKAGE_jq|CONFIG_PACKAGE_jsonfilter|CONFIG_PACKAGE_mosquitto|CONFIG_PACKAGE_socat' .config || true
+          grep -E 'CONFIG_PACKAGE_luci|CONFIG_PACKAGE_smartdns|CONFIG_PACKAGE_ttyd|CONFIG_PACKAGE_zerotier|CONFIG_PACKAGE_ddns|CONFIG_PACKAGE_bind|CONFIG_PACKAGE_resolveip|CONFIG_PACKAGE_ip-full|CONFIG_PACKAGE_jq|CONFIG_PACKAGE_jsonfilter|CONFIG_PACKAGE_mosquitto|CONFIG_PACKAGE_socat|CONFIG_PACKAGE_.*argon|CONFIG_PACKAGE_.*wechatpush|CONFIG_PACKAGE_.*passwall|CONFIG_PACKAGE_.*sing-box|CONFIG_PACKAGE_.*xray|CONFIG_PACKAGE_.*shadowsocks|CONFIG_PACKAGE_.*haproxy' .config || true
 
       - name: Download sources
         run: |
