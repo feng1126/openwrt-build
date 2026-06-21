@@ -57,7 +57,10 @@ git branch -M main
 REMOTE_URL="https://github.com/${GITHUB_OWNER}/${REPO_NAME}.git"
 git remote remove origin 2>/dev/null || true
 git remote add origin "${REMOTE_URL}"
-git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" push -u origin main
+GIT_AUTH_HEADER="$(
+  printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 | tr -d '\n'
+)"
+git -c "http.extraHeader=AUTHORIZATION: Basic ${GIT_AUTH_HEADER}" push -u origin main
 
 echo "Triggering workflow..."
 curl -fsS -X POST \
