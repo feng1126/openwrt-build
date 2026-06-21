@@ -48,8 +48,8 @@ on:
           CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y
           CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Geoview=y
           CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy=y
-          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=y
-          CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server=y
+          # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client is not set
+          # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server is not set
           CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=y
           CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
           CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y
@@ -90,8 +90,6 @@ on:
           CONFIG_PACKAGE_geoview=y
           CONFIG_PACKAGE_sing-box=y
           CONFIG_PACKAGE_xray-core=y
-          CONFIG_PACKAGE_shadowsocks-rust-sslocal=y
-          CONFIG_PACKAGE_shadowsocks-rust-ssserver=y
           CONFIG_PACKAGE_simple-obfs-client=y
           CONFIG_PACKAGE_v2ray-plugin=y
           CONFIG_PACKAGE_iptables-nft=y
