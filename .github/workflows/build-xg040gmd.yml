@@ -46,6 +46,8 @@ jobs:
         run: |
           git clone https://github.com/openwrt/openwrt.git openwrt
           cd openwrt
+          git config user.name "xg040gmd-builder"
+          git config user.email "xg040gmd-builder@users.noreply.github.com"
           git fetch origin "${{ github.event.inputs.base_branch }}"
           git fetch origin "pull/${{ github.event.inputs.pr_id }}/head:pr-${{ github.event.inputs.pr_id }}"
           git checkout -B "xg040gmd-build" "origin/${{ github.event.inputs.base_branch }}"
