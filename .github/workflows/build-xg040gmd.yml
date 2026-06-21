@@ -12,12 +12,56 @@ on:
         required: true
         default: "main"
       config_seed:
-        description: "Minimal .config seed"
+        description: "OpenWrt .config seed"
         required: false
         default: |
           CONFIG_TARGET_airoha=y
           CONFIG_TARGET_airoha_an7581=y
           CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md=y
+          CONFIG_PACKAGE_luci=y
+          CONFIG_PACKAGE_luci-ssl=y
+          CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-package-manager-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-ttyd-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-ddns-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-smartdns-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-zerotier-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-mosquitto-zh-cn=y
+          CONFIG_PACKAGE_luci-i18n-socat-zh-cn=y
+          CONFIG_PACKAGE_luci-app-firewall=y
+          CONFIG_PACKAGE_luci-app-package-manager=y
+          CONFIG_PACKAGE_luci-app-ttyd=y
+          CONFIG_PACKAGE_luci-app-ddns=y
+          CONFIG_PACKAGE_luci-app-smartdns=y
+          CONFIG_PACKAGE_luci-app-zerotier=y
+          CONFIG_PACKAGE_luci-app-mosquitto=y
+          CONFIG_PACKAGE_luci-app-socat=y
+          CONFIG_PACKAGE_luci-proto-ipv6=y
+          CONFIG_PACKAGE_luci-proto-ppp=y
+          CONFIG_PACKAGE_luci-theme-bootstrap=y
+          CONFIG_PACKAGE_uhttpd=y
+          CONFIG_PACKAGE_uhttpd-mod-ubus=y
+          CONFIG_PACKAGE_openssl-util=y
+          CONFIG_PACKAGE_ca-bundle=y
+          CONFIG_PACKAGE_ca-certificates=y
+          CONFIG_PACKAGE_ddns-scripts=y
+          CONFIG_PACKAGE_ddns-scripts-services=y
+          CONFIG_PACKAGE_smartdns=y
+          CONFIG_PACKAGE_ttyd=y
+          CONFIG_PACKAGE_zerotier=y
+          CONFIG_PACKAGE_mosquitto-ssl=y
+          CONFIG_PACKAGE_socat=y
+          CONFIG_PACKAGE_curl=y
+          CONFIG_PACKAGE_wget-ssl=y
+          CONFIG_PACKAGE_nano=y
+          CONFIG_PACKAGE_htop=y
+          CONFIG_PACKAGE_iperf3=y
+          CONFIG_PACKAGE_tcpdump=y
+          CONFIG_PACKAGE_block-mount=y
+          CONFIG_PACKAGE_kmod-usb-storage=y
+          CONFIG_PACKAGE_e2fsprogs=y
+          CONFIG_PACKAGE_lsblk=y
 
 jobs:
   build:
@@ -70,6 +114,8 @@ jobs:
           make defconfig
           echo "===== target profile check ====="
           grep -E 'CONFIG_TARGET_airoha|CONFIG_TARGET.*xg|CONFIG_TARGET.*nokia|CONFIG_TARGET.*040' .config || true
+          echo "===== luci/package check ====="
+          grep -E 'CONFIG_PACKAGE_luci|CONFIG_PACKAGE_smartdns|CONFIG_PACKAGE_ttyd|CONFIG_PACKAGE_zerotier|CONFIG_PACKAGE_ddns|CONFIG_PACKAGE_mosquitto|CONFIG_PACKAGE_socat' .config || true
 
       - name: Download sources
         run: |
