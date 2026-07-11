@@ -13,7 +13,7 @@ on:
         default: |
           CONFIG_TARGET_airoha=y
           CONFIG_TARGET_airoha_an7581=y
-          CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md=y
+          CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md-ubi=y
           CONFIG_PACKAGE_luci=y
           CONFIG_PACKAGE_luci-ssl=y
           CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
