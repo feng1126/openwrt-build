@@ -3,12 +3,8 @@ name: Build XG-040G-MD OpenWrt
 on:
   workflow_dispatch:
     inputs:
-      pr_id:
-        description: "OpenWrt PR ID to merge"
-        required: true
-        default: "23569"
       base_branch:
-        description: "OpenWrt base branch"
+        description: "OpenWrt official branch to build"
         required: true
         default: "main"
       config_seed:
@@ -146,16 +142,10 @@ jobs:
             gettext git libncurses-dev libssl-dev python3-setuptools rsync swig \
             unzip zlib1g-dev file wget ccache python3 python3-dev
 
-      - name: Clone OpenWrt and merge PR
+      - name: Clone official OpenWrt snapshot source
         run: |
-          git clone https://github.com/openwrt/openwrt.git openwrt
+          git clone --branch "${{ github.event.inputs.base_branch }}" https://github.com/openwrt/openwrt.git openwrt
           cd openwrt
-          git config user.name "xg040gmd-builder"
-          git config user.email "xg040gmd-builder@users.noreply.github.com"
-          git fetch origin "${{ github.event.inputs.base_branch }}"
-          git fetch origin "pull/${{ github.event.inputs.pr_id }}/head:pr-${{ github.event.inputs.pr_id }}"
-          git checkout -B "xg040gmd-build" "origin/${{ github.event.inputs.base_branch }}"
-          git merge --no-ff --no-edit "pr-${{ github.event.inputs.pr_id }}"
           git log --oneline -5
 
       - name: Copy local custom packages
@@ -214,6 +204,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: xg040gmd-openwrt-pr-${{ github.event.inputs.pr_id }}
+          name: xg040gmd-openwrt-${{ github.event.inputs.base_branch }}
           path: artifact
           retention-days: 14
