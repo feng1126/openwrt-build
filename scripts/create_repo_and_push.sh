@@ -6,9 +6,9 @@ set -euo pipefail
 #   export GITHUB_TOKEN=ghp_xxx
 # Optional:
 #   export GITHUB_OWNER=your_user_or_org
-#   export REPO_NAME=openwrt-xg040gmd-build
+#   export REPO_NAME=openwrt-build
 
-REPO_NAME="${REPO_NAME:-openwrt-xg040gmd-build}"
+REPO_NAME="${REPO_NAME:-openwrt-build}"
 GITHUB_API="${GITHUB_API:-https://api.github.com}"
 
 if [ -z "${GITHUB_TOKEN:-}" ]; then
