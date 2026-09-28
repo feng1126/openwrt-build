@@ -56,6 +56,10 @@ jobs:
         run: |
           cd openwrt
           mkdir -p package/custom
+          for pkg in default-settings autosamba automount; do
+            mkdir -p "package/custom/$pkg"
+            cp -a "../local_packages/$pkg/Makefile" "../local_packages/$pkg/files" "package/custom/$pkg/"
+          done
           cp -a ../local_packages/luci-app-airoha-npu package/custom/luci-app-airoha-npu
           cp -a ../local_packages/luci-app-wechatpush package/custom/luci-app-wechatpush
           cp -a ../local_packages/openwrt-passwall/luci-app-passwall package/custom/luci-app-passwall
@@ -96,6 +100,9 @@ jobs:
             CONFIG_PACKAGE_airoha-en7581-npu-firmware \
             CONFIG_PACKAGE_kmod-nft-offload \
             CONFIG_PACKAGE_conntrack \
+            CONFIG_PACKAGE_default-settings \
+            CONFIG_PACKAGE_autosamba \
+            CONFIG_PACKAGE_automount \
             CONFIG_PACKAGE_luci-app-airoha-npu \
             CONFIG_PACKAGE_luci \
             CONFIG_PACKAGE_luci-ssl \
