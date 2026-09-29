@@ -6,7 +6,7 @@ name: Auto Cache Software Release JSONs
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '17 */2 * * *'
   workflow_dispatch:
 
 env:
@@ -20,14 +20,11 @@ jobs:
   cache_json:
     outputs:
      must_upload: ${{ steps.fetch.outputs.must_upload }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@main
 
-      - name: Initialization environment
-        run: |
-          sudo timedatectl set-timezone "$TZ"
 
       - name: Install GitHub CLI
         run: sudo apt-get update && sudo apt-get install -y gh
