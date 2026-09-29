@@ -126,3 +126,9 @@ msgstr "加速符合条件的转发流量。开启后请验证代理分流、流
 
 msgid "Configure hardware flow offloading"
 msgstr "设置硬件流量卸载"
+
+msgid "Offload Settings"
+msgstr "加速设置"
+
+msgid "Runtime Status"
+msgstr "运行状态"

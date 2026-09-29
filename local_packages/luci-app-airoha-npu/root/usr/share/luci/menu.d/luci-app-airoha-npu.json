@@ -3,8 +3,8 @@
 		"title": "Airoha NPU",
 		"order": 15,
 		"action": {
-			"type": "view",
-			"path": "airoha_npu/offload"
+			"type": "alias",
+			"path": "admin/network/airoha_npu/offload"
 		},
 		"depends": {
 			"acl": [
@@ -12,17 +12,20 @@
 			]
 		}
 	},
-	"admin/status/npu": {
-		"title": "SoC Status",
-		"order": 15,
+	"admin/network/airoha_npu/offload": {
+		"title": "Offload Settings",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "airoha_npu/offload"
+		}
+	},
+	"admin/network/airoha_npu/status": {
+		"title": "Runtime Status",
+		"order": 20,
 		"action": {
 			"type": "view",
 			"path": "airoha_npu/status"
-		},
-		"depends": {
-			"acl": [
-				"luci-app-airoha-npu"
-			]
 		}
 	}
 }
