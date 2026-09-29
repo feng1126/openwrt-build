@@ -81,3 +81,25 @@ CPU frequency controls, overclocking RPC methods, and direct register access hav
 been removed. The build configuration disables `/dev/mem` and BusyBox `devmem`.
 The only settings provided by this app are the manual firewall flow-offloading
 switches under **Network > Airoha NPU**; opening either page does not enable them.
+
+## XG-040G-MD network defaults
+
+Every build installs `files/etc/uci-defaults/99-zz-xg040gmd-wan` into the
+firmware. OpenWrt runs it once after installation (including a sysupgrade),
+after `99-default-settings`. It only applies to `nokia,xg-040g-md` and
+`nokia,xg-040g-md-ubi` boards:
+
+- `lan1`: `WAN` uses IPv4 DHCP; `WAN6` uses DHCPv6 with `reqaddress=try`
+  and `reqprefix=no`, matching the tested upstream-router setup.
+- `lan2`, `lan3`, `lan4`: remain in `br-lan`, using `10.1.1.1/24` to avoid
+  conflicting with the upstream router at `10.10.10.10`.
+- Both WAN interfaces belong to the `wan` firewall zone, with IPv4
+  masquerading, MSS clamping and LAN-to-WAN forwarding. Existing zone
+  policies and the standard DHCPv6/ICMPv6 rules are preserved.
+
+The script replaces WAN/WAN6 interface definitions and the LAN address even
+when upgrading with retained settings. Repeated execution produces the same
+configuration. IPv6 prefix delegation to downstream LAN clients is not
+requested. DDNS credentials and per-device service settings are not included.
+The build verifies that the target profile and `odhcp6c` are enabled before
+installing the script. IPv6 still requires an upstream IPv6 router/service.

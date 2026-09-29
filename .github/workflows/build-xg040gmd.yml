@@ -136,6 +136,18 @@ jobs:
           echo "===== luci/package check ====="
           grep -E 'CONFIG_PACKAGE_luci|CONFIG_PACKAGE_smartdns|CONFIG_PACKAGE_ttyd|CONFIG_PACKAGE_zerotier|CONFIG_PACKAGE_ddns|CONFIG_PACKAGE_bind|CONFIG_PACKAGE_resolveip|CONFIG_PACKAGE_ip-full|CONFIG_PACKAGE_jq|CONFIG_PACKAGE_jsonfilter|CONFIG_PACKAGE_mosquitto|CONFIG_PACKAGE_socat|CONFIG_PACKAGE_.*argon|CONFIG_PACKAGE_.*wechatpush|CONFIG_PACKAGE_.*passwall|CONFIG_PACKAGE_.*sing-box|CONFIG_PACKAGE_.*xray|CONFIG_PACKAGE_.*shadowsocks|CONFIG_PACKAGE_.*haproxy' .config || true
 
+      - name: Install XG-040G-MD WAN defaults
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -qx 'CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md-ubi=y' openwrt/.config
+          grep -qx 'CONFIG_PACKAGE_odhcp6c=y' openwrt/.config
+          sh -n files/etc/uci-defaults/99-zz-xg040gmd-wan
+          install -Dm755 files/etc/uci-defaults/99-zz-xg040gmd-wan \
+            openwrt/files/etc/uci-defaults/99-zz-xg040gmd-wan
+          cmp files/etc/uci-defaults/99-zz-xg040gmd-wan \
+            openwrt/files/etc/uci-defaults/99-zz-xg040gmd-wan
+
       - name: Download sources
         shell: bash
         run: |

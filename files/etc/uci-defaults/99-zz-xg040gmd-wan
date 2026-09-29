@@ -1,0 +1,95 @@
+#!/bin/sh
+# Apply after 99-default-settings on each newly installed firmware.
+set -eu
+
+case "$(cat /tmp/sysinfo/board_name)" in
+	nokia,xg-040g-md|nokia,xg-040g-md-ubi) ;;
+	*) exit 0 ;;
+esac
+
+# Keep the copper uplink out of the LAN bridge.
+bridge=
+for section in $(uci show network | sed -n 's/^\(network\.[^.]*\)=device$/\1/p'); do
+	if [ "$(uci -q get "$section.name" || true)" = br-lan ]; then
+		bridge="$section"
+		break
+	fi
+done
+if [ -z "$bridge" ]; then
+	bridge=network.br_lan
+	uci set "$bridge=device"
+	uci set "$bridge.name=br-lan"
+fi
+uci set "$bridge.type=bridge"
+uci -q delete "$bridge.ports" || true
+for port in lan2 lan3 lan4; do
+	uci add_list "$bridge.ports=$port"
+done
+
+uci set network.lan=interface
+uci set network.lan.device=br-lan
+uci set network.lan.proto=static
+# The upstream router uses 10.10.10.10; use a separate LAN subnet.
+uci set network.lan.ipaddr=10.1.1.1
+uci set network.lan.netmask=255.255.255.0
+uci -q delete network.lan.gateway || true
+uci -q delete network.lan.ifname || true
+
+# Remove both naming variants to avoid duplicate clients on lan1.
+for interface in wan wan6 WAN WAN6; do
+	uci -q delete "network.$interface" || true
+done
+uci set network.WAN=interface
+uci set network.WAN.device=lan1
+uci set network.WAN.proto=dhcp
+uci set network.WAN6=interface
+uci set network.WAN6.device=lan1
+uci set network.WAN6.proto=dhcpv6
+uci set network.WAN6.reqaddress=try
+# This device needs an upstream IPv6 address, not a delegated LAN prefix.
+uci set network.WAN6.reqprefix=no
+
+wan_zone=
+for section in $(uci show firewall | sed -n 's/^\(firewall\.[^.]*\)=zone$/\1/p'); do
+	networks="$(uci -q get "$section.network" || true)"
+	uci -q delete "$section.network" || true
+	for interface in $networks; do
+		case "$interface" in
+			wan|wan6|WAN|WAN6) ;;
+			*) uci add_list "$section.network=$interface" ;;
+		esac
+	done
+	if [ "$(uci -q get "$section.name" || true)" = wan ]; then
+		wan_zone="$section"
+	fi
+done
+if [ -z "$wan_zone" ]; then
+	wan_zone="firewall.$(uci add firewall zone)"
+	uci set "$wan_zone.name=wan"
+	uci set "$wan_zone.input=REJECT"
+	uci set "$wan_zone.output=ACCEPT"
+	uci set "$wan_zone.forward=REJECT"
+fi
+uci add_list "$wan_zone.network=WAN"
+uci add_list "$wan_zone.network=WAN6"
+uci set "$wan_zone.masq=1"
+uci set "$wan_zone.mtu_fix=1"
+
+forwarding=
+for section in $(uci show firewall | sed -n 's/^\(firewall\.[^.]*\)=forwarding$/\1/p'); do
+	if [ "$(uci -q get "$section.src" || true)" = lan ] &&
+	   [ "$(uci -q get "$section.dest" || true)" = wan ]; then
+		forwarding="$section"
+		break
+	fi
+done
+if [ -z "$forwarding" ]; then
+	forwarding="firewall.$(uci add firewall forwarding)"
+	uci set "$forwarding.src=lan"
+	uci set "$forwarding.dest=wan"
+fi
+
+# Preserve upstream DHCPv6/ICMPv6 rules and existing firewall policies.
+uci commit network
+uci commit firewall
+exit 0
