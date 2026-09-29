@@ -1,0 +1,60 @@
+name: Publish existing OpenWrt firmware
+'on':
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful firmware build run ID
+        required: true
+        type: string
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Validate successful build
+      id: build
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        RUN_ID: ${{ inputs.run_id }}
+      shell: bash
+      run: "set -euo pipefail\n[[ \"$RUN_ID\" =~ ^[0-9]+$ ]]\ngh api \"repos/$GH_REPO/actions/runs/$RUN_ID\"\
+        \ > run.json\njq -e '.conclusion == \"success\" and .path == \".github/workflows/build-xg040gmd.yml\"\
+        ' run.json\nartifact=$(gh api \"repos/$GH_REPO/actions/runs/$RUN_ID/artifacts\"\
+        \ --jq '[.artifacts[] | select(.expired == false and (.name | startswith(\"\
+        xg040gmd-openwrt-\")))] | if length == 1 then .[0].name else error(\"Expected\
+        \ exactly one firmware artifact\") end')\n{\n echo \"artifact=$artifact\"\n\
+        \ echo \"branch=${artifact#xg040gmd-openwrt-}\"\n echo \"sha=$(jq -r .head_sha\
+        \ run.json)\"\n echo \"attempt=$(jq -r .run_attempt run.json)\"\n} >> \"$GITHUB_OUTPUT\"\
+        \n"
+    - name: Download and extract firmware
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ steps.build.outputs.artifact }}
+        path: artifact
+        github-token: ${{ github.token }}
+        run-id: ${{ inputs.run_id }}
+    - name: Publish individual firmware files
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        BUILD_BRANCH: ${{ steps.build.outputs.branch }}
+        ARTIFACT_BRANCH: ${{ steps.build.outputs.branch }}
+        BUILD_SHA: ${{ steps.build.outputs.sha }}
+        BUILD_RUN_ID: ${{ inputs.run_id }}
+        BUILD_ATTEMPT: ${{ steps.build.outputs.attempt }}
+      run: "set -euo pipefail\ntag=\"openwrt-${ARTIFACT_BRANCH}-${BUILD_RUN_ID}-${BUILD_ATTEMPT}\"\
+        \nmapfile -d '' files < <(find artifact/targets -type f ! -path '*/packages/*'\
+        \ -print0 | sort -z)\nif ! printf '%s\\n' \"${files[@]}\" | grep -Eq '\\.(bin|itb|img|ubi|img\\\
+        .gz)$'; then\n  echo \"::error::No firmware image found; refusing to publish\
+        \ release\"\n  exit 1\nfi\nfiles+=(artifact/openwrt.config)\n{\n  echo \"\
+        XG-040G-MD OpenWrt firmware\"\n  echo\n  echo \"Source branch: ${BUILD_BRANCH}\"\
+        \n  echo \"Build: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${BUILD_RUN_ID}\"\
+        \n  echo\n  echo \"Build commit: ${BUILD_SHA}\"\n} > release-notes.md\ngh\
+        \ release create \"$tag\" \"${files[@]}\" \\\n  --target \"$BUILD_SHA\" \\\
+        \n  --title \"XG-040G-MD OpenWrt ${BUILD_BRANCH} · ${BUILD_RUN_ID}.${BUILD_ATTEMPT}\"\
+        \ \\\n  --notes-file release-notes.md --draft\ngh release edit \"$tag\" --draft=false\
+        \ --latest\n"
