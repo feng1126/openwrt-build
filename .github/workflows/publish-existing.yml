@@ -54,7 +54,7 @@ jobs:
         XG-040G-MD OpenWrt firmware\"\n  echo\n  echo \"Source branch: ${BUILD_BRANCH}\"\
         \n  echo \"Build: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${BUILD_RUN_ID}\"\
         \n  echo\n  echo \"Build commit: ${BUILD_SHA}\"\n} > release-notes.md\ngh\
-        \ release create \"$tag\" \"${files[@]}\" \\\n  --target \"$BUILD_SHA\" \\\
-        \n  --title \"XG-040G-MD OpenWrt ${BUILD_BRANCH} · ${BUILD_RUN_ID}.${BUILD_ATTEMPT}\"\
+        \ release create \"$tag\" \"${files[@]}\" \\\n  --verify-tag \\\n  --title\
+        \ \"XG-040G-MD OpenWrt ${BUILD_BRANCH} · ${BUILD_RUN_ID}.${BUILD_ATTEMPT}\"\
         \ \\\n  --notes-file release-notes.md --draft\ngh release edit \"$tag\" --draft=false\
         \ --latest\n"

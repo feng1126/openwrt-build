@@ -215,8 +215,9 @@ jobs:
             echo
             cat build-logs/source.txt
           } > release-notes.md
+          gh api "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA"
           gh release create "$tag" "${files[@]}" \
-            --target "$GITHUB_SHA" \
+            --verify-tag \
             --title "XG-040G-MD OpenWrt ${BUILD_BRANCH} · ${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}" \
             --notes-file release-notes.md --draft
           gh release edit "$tag" --draft=false --latest
