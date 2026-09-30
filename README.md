@@ -103,3 +103,12 @@ configuration. IPv6 prefix delegation to downstream LAN clients is not
 requested. DDNS credentials and per-device service settings are not included.
 The build verifies that the target profile and `odhcp6c` are enabled before
 installing the script. IPv6 still requires an upstream IPv6 router/service.
+
+## NATMap
+
+The firmware defaults to the locally vendored muink enhanced NATMap packages:
+`luci-app-natmapt`, its Simplified Chinese translation, and the matching `natmapt`
+backend. The original `natmap` and `luci-app-natmap` packages are disabled to avoid
+conflicting service, configuration and LuCI files. Package source commits are
+recorded in each vendored package's `SOURCE` file. The workflow checks these
+selections after `make defconfig`. Configure mappings in LuCI after flashing.

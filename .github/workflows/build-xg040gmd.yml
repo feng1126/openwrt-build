@@ -66,6 +66,8 @@ jobs:
           cp -a ../local_packages/luci-app-wechatpush package/custom/luci-app-wechatpush
           cp -a ../local_packages/luci-app-socat package/custom/luci-app-socat
           cp -a ../local_packages/luci-app-zerotier package/custom/luci-app-zerotier
+          cp -a ../local_packages/luci-app-natmapt package/custom/luci-app-natmapt
+          cp -a ../local_packages/natmapt package/custom/natmapt
           test ! -e package/custom/luci-app-socat/root/etc/config/socat
           test -s package/custom/luci-app-socat/root/etc/uci-defaults/luci-app-socat
           cp -a ../local_packages/openwrt-passwall/luci-app-passwall package/custom/luci-app-passwall
@@ -126,6 +128,9 @@ jobs:
             CONFIG_PACKAGE_zerotier \
             CONFIG_PACKAGE_luci-i18n-socat-zh-cn \
             CONFIG_PACKAGE_socat \
+            CONFIG_PACKAGE_natmapt \
+            CONFIG_PACKAGE_luci-app-natmapt \
+            CONFIG_PACKAGE_luci-i18n-natmapt-zh-cn \
             CONFIG_PACKAGE_luci-compat \
             CONFIG_PACKAGE_cloudflared \
             CONFIG_PACKAGE_luci-app-cloudflared \
@@ -140,6 +145,10 @@ jobs:
           done
           if grep -Eq '^CONFIG_PACKAGE_(sing-box|luci-app-passwall_INCLUDE_SingBox)=(y|m)$' .config; then
             echo "::error::sing-box must remain disabled in this firmware"
+            exit 1
+          fi
+          if grep -Eq '^CONFIG_PACKAGE_(natmap|luci-app-natmap|luci-i18n-natmap-zh-cn)=(y|m)$' .config; then
+            echo "::error::Original NATMap packages conflict with the enhanced NATMap packages"
             exit 1
           fi
           echo "===== target profile check ====="
