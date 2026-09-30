@@ -66,7 +66,8 @@ jobs:
           cp -a ../local_packages/luci-app-wechatpush package/custom/luci-app-wechatpush
           cp -a ../local_packages/luci-app-socat package/custom/luci-app-socat
           cp -a ../local_packages/luci-app-zerotier package/custom/luci-app-zerotier
-          test -s package/custom/luci-app-socat/root/etc/config/socat
+          test ! -e package/custom/luci-app-socat/root/etc/config/socat
+          test -s package/custom/luci-app-socat/root/etc/uci-defaults/luci-app-socat
           cp -a ../local_packages/openwrt-passwall/luci-app-passwall package/custom/luci-app-passwall
           cp -a ../local_packages/openwrt-passwall-packages/. package/custom/
           echo "===== local custom packages ====="

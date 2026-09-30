@@ -1,5 +1,15 @@
 #!/bin/sh
 
+# socat owns /etc/config/socat; add only the LuCI-specific section.
+# Keep existing forwarding rules and the user's enable setting intact.
+if ! uci -q get socat.@global[0] >/dev/null; then
+	uci -q batch <<-EOF >/dev/null || exit 1
+		add socat global
+		set socat.@global[-1].enable=0
+		commit socat
+	EOF
+fi
+
 uci -q batch <<-EOF >/dev/null
 	delete firewall.socat
 	set firewall.socat=include
