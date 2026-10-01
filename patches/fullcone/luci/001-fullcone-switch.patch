@@ -1,0 +1,14 @@
+--- a/htdocs/luci-static/resources/view/firewall/zones.js
++++ b/htdocs/luci-static/resources/view/firewall/zones.js
+@@ -55,6 +55,11 @@
+ 		};
+ 
+ 		o = s.option(form.Flag, 'drop_invalid', _('Drop invalid packets'));
++
++		o = s.option(form.Flag, 'fullcone', _('Full Cone NAT'),
++			_('Enable IPv4 Full Cone NAT for masquerading zones. Improves UDP peer connectivity; does not increase bandwidth.'));
++		o.default = '0';
++		o.rmempty = false;
+ 
+ 		let p = [
+ 			s.option(form.ListValue, 'input', _('Input', 'firewall input')),

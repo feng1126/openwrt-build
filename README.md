@@ -132,3 +132,10 @@ IPv6 services check their actual origin IP using the provider API; dynv6 IPv6
 services obtain the address from `pppoe-WAN` without forcing IPv6 API transport.
 Tokens stay in the router configuration and are never baked into the firmware.
 The sysupgrade preservation list includes `/etc/natmap/`.
+
+## Full Cone NAT
+
+Includes pinned ImmortalWrt Full Cone module and userspace patches, disabled by
+default. After flashing, use **Network > Firewall > General Settings > Full Cone NAT**
+to enable IPv4 Full Cone for masquerading zones. This improves UDP peer
+connectivity, not bandwidth. See [patch sources and verification](patches/fullcone/README.md).

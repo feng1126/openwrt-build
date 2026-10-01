@@ -93,6 +93,14 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Install Full Cone NAT support
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-logs
+          python3 scripts/apply-fullcone.py openwrt 2>&1 | tee build-logs/fullcone-setup.log
+          cp patches/fullcone/sources.json build-logs/fullcone-sources.json
+
       - name: Generate config
         shell: bash
         run: |
@@ -112,6 +120,9 @@ jobs:
             CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md-ubi \
             CONFIG_PACKAGE_airoha-en7581-npu-firmware \
             CONFIG_PACKAGE_kmod-nft-offload \
+            CONFIG_PACKAGE_kmod-nft-fullcone \
+            CONFIG_PACKAGE_firewall4 \
+            CONFIG_PACKAGE_nftables-json \
             CONFIG_PACKAGE_conntrack \
             CONFIG_PACKAGE_default-settings \
             CONFIG_PACKAGE_autosamba \
@@ -192,6 +203,18 @@ jobs:
           cd openwrt
           set -o pipefail
           make download -j"$(nproc)" V=s 2>&1 | tee ../build-logs/download.log
+
+      - name: Verify Full Cone package patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd openwrt
+          for pkg in libs/libnftnl network/utils/nftables network/config/firewall4 custom/fullconenat-nft; do
+            make "package/$pkg/prepare" V=s 2>&1 | tee -a ../build-logs/fullcone-prepare.log
+          done
+          grep -R -q 'NFTNL_EXPR_FULLCONE' build_dir/target-*/libnftnl-*/include/libnftnl/expr.h
+          grep -R -q 'NFT_NAT_FULLCONE' build_dir/target-*/nftables-*/include/statement.h
+          grep -R -q 'nft_try_fullcone' build_dir/target-*/firewall4-*/root/usr/share/ucode/fw4.uc
 
       - name: Build firmware
         shell: bash

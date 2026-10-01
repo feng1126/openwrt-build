@@ -1,0 +1,5 @@
+msgid "Full Cone NAT"
+msgstr "全锥形 NAT"
+
+msgid "Enable IPv4 Full Cone NAT for masquerading zones. Improves UDP peer connectivity; does not increase bandwidth."
+msgstr "为启用 IPv4 地址伪装的区域开启全锥形 NAT，改善 UDP 对等连接，不增加带宽。"
