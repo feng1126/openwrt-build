@@ -29,8 +29,8 @@ done
 uci set network.lan=interface
 uci set network.lan.device=br-lan
 uci set network.lan.proto=static
-# The upstream router uses 10.10.10.10; use a separate LAN subnet.
-uci set network.lan.ipaddr=10.1.1.1
+# Keep the default LAN address consistent with default-settings.
+uci set network.lan.ipaddr=10.10.10.10
 uci set network.lan.netmask=255.255.255.0
 uci -q delete network.lan.gateway || true
 uci -q delete network.lan.ifname || true
