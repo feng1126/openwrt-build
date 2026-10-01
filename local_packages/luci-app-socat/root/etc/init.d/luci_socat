@@ -118,7 +118,9 @@ run_service() {
 			[ -n "$proxy_server" ] && dest_proto="${dest_proto}:${proxy_server}"
 			[ -n "$proxy_port" ] && proxy_arg=",${proxy_arg}=${proxy_port}"
 		}
-		${CONFIG_PATH}/$1 ${listen}-listen:${listen_port}${ipv6only_params}${reuseaddr},fork ${dest_proto}:${dest_ip}:${dest_port}${proxy_arg} >/dev/null 2>&1 &
+		# rc.common holds the procd lock on fd 1000. Background workers must
+		# release their copy, otherwise enabled/status and sysupgrade hang.
+		${CONFIG_PATH}/$1 ${listen}-listen:${listen_port}${ipv6only_params}${reuseaddr},fork ${dest_proto}:${dest_ip}:${dest_port}${proxy_arg} 1000>&- >/dev/null 2>&1 &
 	fi
 	
 	[ "$firewall_accept" == "1" ] && {
