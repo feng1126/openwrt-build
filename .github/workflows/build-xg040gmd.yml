@@ -64,6 +64,7 @@ jobs:
           done
           cp -a ../local_packages/luci-app-airoha-npu package/custom/luci-app-airoha-npu
           cp -a ../local_packages/luci-app-wechatpush package/custom/luci-app-wechatpush
+          cp -a ../local_packages/wrtbwmon package/custom/wrtbwmon
           cp -a ../local_packages/luci-app-socat package/custom/luci-app-socat
           cp -a ../local_packages/luci-app-zerotier package/custom/luci-app-zerotier
           cp -a ../local_packages/luci-app-natmapt package/custom/luci-app-natmapt
@@ -122,6 +123,8 @@ jobs:
             CONFIG_PACKAGE_luci-i18n-base-zh-cn \
             CONFIG_PACKAGE_luci-theme-argon \
             CONFIG_PACKAGE_luci-app-wechatpush \
+            CONFIG_PACKAGE_luci-app-wechatpush_Enable_Traffic_Monitoring \
+            CONFIG_PACKAGE_wrtbwmon \
             CONFIG_PACKAGE_luci-app-socat \
             CONFIG_PACKAGE_luci-app-zerotier \
             CONFIG_PACKAGE_luci-i18n-zerotier-zh-cn \
