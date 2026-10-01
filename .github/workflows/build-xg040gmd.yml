@@ -139,10 +139,13 @@ jobs:
             CONFIG_PACKAGE_luci-app-cloudflared \
             CONFIG_PACKAGE_luci-i18n-cloudflared-zh-cn \
             CONFIG_PACKAGE_luci-app-passwall \
-            CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray \
+            CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Hysteria \
+            CONFIG_PACKAGE_ipt2socks \
+            CONFIG_PACKAGE_chinadns-ng \
+            CONFIG_PACKAGE_dns2socks \
             CONFIG_PACKAGE_v2ray-geoip \
             CONFIG_PACKAGE_v2ray-geosite \
-            CONFIG_PACKAGE_xray-core; do
+            CONFIG_PACKAGE_hysteria; do
             if ! grep -qx "${symbol}=y" .config; then
               echo "::error::Required configuration missing: ${symbol}=y"
               exit 1
@@ -150,6 +153,10 @@ jobs:
           done
           if grep -Eq '^CONFIG_PACKAGE_(sing-box|luci-app-passwall_INCLUDE_SingBox)=(y|m)$' .config; then
             echo "::error::sing-box must remain disabled in this firmware"
+            exit 1
+          fi
+          if grep -Eq '^CONFIG_PACKAGE_(xray-core|xray-plugin|luci-app-passwall_INCLUDE_Xray|luci-app-passwall_INCLUDE_Xray_Plugin)=(y|m)$' .config; then
+            echo "::error::Xray must remain disabled; use Hysteria and native SOCKS forwarding"
             exit 1
           fi
           if grep -Eq '^CONFIG_PACKAGE_(natmap|luci-app-natmap|luci-i18n-natmap-zh-cn)=(y|m)$' .config; then

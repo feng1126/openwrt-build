@@ -1,0 +1,45 @@
+#!/bin/sh
+# Migrate retained HY2 settings without changing server addresses or secrets.
+[ -f /etc/config/passwall ] || exit 0
+[ -x /usr/bin/hysteria ] || exit 0
+. /lib/functions.sh
+
+migrate_hy2() {
+	local type protocol pin insecure
+	config_get type "$1" type
+	config_get protocol "$1" protocol
+	[ "$type:$protocol" = "Xray:hysteria2" ] || return 0
+	uci set "passwall.$1.type=Hysteria2"
+	uci set "passwall.$1.protocol=udp"
+	config_get pin "$1" tls_pinSHA256
+	config_get insecure "$1" tls_allowInsecure
+	# Keep fingerprint verification for pinned self-signed certificates.
+	[ -n "$pin" ] && [ -z "$insecure" ] && uci set "passwall.$1.tls_allowInsecure=1"
+	return 0
+}
+
+config_load passwall
+config_foreach migrate_hy2 nodes
+
+node=$(uci -q get passwall.@global[0].node)
+if [ -n "$node" ] && [ "$(uci -q get "passwall.$node.type")" = "Socks" ] && [ "$(uci -q get "passwall.$node.address")" = "127.0.0.1" ]; then
+	shunt=$(uci -q get passwall.@global[0].dns_shunt)
+	if [ "$shunt" = "smartdns" ]; then
+		[ "$(uci -q get passwall.@global[0].smartdns_dns_mode)" = "xray" ] && uci set passwall.@global[0].smartdns_dns_mode=socks
+		mode=$(uci -q get passwall.@global[0].smartdns_dns_mode)
+	else
+		[ "$(uci -q get passwall.@global[0].dns_mode)" = "xray" ] && {
+			uci set passwall.@global[0].dns_shunt=chinadns-ng
+			uci set passwall.@global[0].dns_mode=dns2socks
+			shunt=chinadns-ng
+		}
+		mode=$(uci -q get passwall.@global[0].dns_mode)
+	fi
+	case "$shunt:$mode" in
+		smartdns:socks|chinadns-ng:dns2socks)
+			uci -q get passwall.@global[0].native_socks >/dev/null || uci set passwall.@global[0].native_socks=1
+			;;
+	esac
+fi
+uci commit passwall
+exit 0
