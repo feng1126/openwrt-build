@@ -206,6 +206,10 @@ o:depends({ _node_sel_shunt = "1",  ['!reverse'] = true })
 -- [[ DNS Settings ]]--
 s:tab("DNS", translate("DNS"))
 
+o = s:taboption("DNS", DynamicList, "dns_redirect_exempt", "DNS 重定向例外来源", "填写局域网 DNS 服务器的 IPv4 地址，允许它直接查询上游，避免与路由器形成 DNS 循环。")
+o.datatype = "ip4addr"
+o.rmempty = true
+
 o = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))

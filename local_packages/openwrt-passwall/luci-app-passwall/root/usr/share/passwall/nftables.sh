@@ -1164,6 +1164,12 @@ add_firewall_rule() {
 
 	nft "add chain $NFTABLE_NAME PSW_DNS"
 	nft "flush chain $NFTABLE_NAME PSW_DNS"
+	# A downstream DNS server must resolve its own upstreams without a loop.
+	local dns_source
+	for dns_source in $(config_n_get @global[0] dns_redirect_exempt); do
+		case "$dns_source" in ''|*[!0-9./]*) continue ;; esac
+		nft "add rule $NFTABLE_NAME PSW_DNS ip saddr $dns_source meta l4proto { tcp, udp } th dport 53 counter return comment \"DNS upstream source\""
+	done
 	if [ $(config_n_get @global[0] dns_redirect "1") = "0" ]; then
 		#Only hijack when dest address is local IP
 		nft "insert rule $NFTABLE_NAME dstnat ip saddr @${NFTSET_LAN} ip daddr @${NFTSET_LOCAL} jump PSW_DNS"
