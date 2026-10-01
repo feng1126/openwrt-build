@@ -115,11 +115,12 @@ selections after `make defconfig`. Configure mappings in LuCI after flashing.
 
 ### DDNS and NATMap recovery
 
-The firmware includes the Cloudflare-Origin NATMap updater, with separate origin
-rules for each hostname, and the Codex/SSH HTTPS forwarding service. Existing
-Cloudflare IPv6 services use the provider API to check their actual origin IP;
-dynv6 IPv6 services obtain the address from `pppoe-WAN` without forcing IPv6 API
-transport. Tokens remain in the router configuration. Certificates and private
-keys are not included in the repository; `/etc/natmap/`, `/etc/codex-proxy/`, and
-`/etc/ssl/fengown/` are included in the sysupgrade preservation list. On a fresh
-install the HTTPS forwarding service stays idle until certificates are supplied.
+The firmware includes the Cloudflare-Origin NATMap updater with separate origin
+rules for each hostname, and plain HTTP forwarding for Codex and SSH web.
+Use `http://codex.fengown.top` and `http://ssh.fengown.top`; origin rules select
+the current NATMap ports automatically. No certificate is required. An upgrade
+converts preserved older proxy configs from HTTPS to HTTP. Existing Cloudflare
+IPv6 services check their actual origin IP using the provider API; dynv6 IPv6
+services obtain the address from `pppoe-WAN` without forcing IPv6 API transport.
+Tokens stay in the router configuration and are never baked into the firmware.
+The sysupgrade preservation list includes `/etc/natmap/`.
