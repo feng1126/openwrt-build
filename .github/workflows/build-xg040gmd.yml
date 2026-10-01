@@ -162,6 +162,11 @@ jobs:
           set -euo pipefail
           grep -qx 'CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md-ubi=y' openwrt/.config
           grep -qx 'CONFIG_PACKAGE_odhcp6c=y' openwrt/.config
+          sh -n files/etc/init.d/codex-proxy
+          sh -n files/etc/uci-defaults/98-ddns-recovery
+          bash -n local_packages/natmapt/files/ddns/Cloudflare-Origin
+          mkdir -p openwrt/files
+          cp -a files/. openwrt/files/
           sh -n files/etc/uci-defaults/99-zz-xg040gmd-wan
           install -Dm755 files/etc/uci-defaults/99-zz-xg040gmd-wan \
             openwrt/files/etc/uci-defaults/99-zz-xg040gmd-wan

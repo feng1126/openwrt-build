@@ -1,0 +1,32 @@
+#!/bin/sh
+# Apply transport fixes to existing services without baking in credentials.
+[ -f /etc/config/ddns ] && {
+    . /lib/functions.sh
+    repair_ddns() {
+        local section="$1" provider ipv6
+        config_get provider "$section" service_name
+        config_get ipv6 "$section" use_ipv6 0
+        [ "$ipv6" = 1 ] || return 0
+        case "$provider" in
+            cloudflare.com-v4)
+                uci set "ddns.$section.use_api_check=1"
+                uci set "ddns.$section.update_script=/usr/lib/ddns/update_cloudflare_com_v4.sh"
+                uci set "ddns.$section.force_ipversion=0"
+                uci set "ddns.$section.use_logfile=0"
+                ;;
+            dynv6.com)
+                uci set "ddns.$section.interface=WAN"
+                uci set "ddns.$section.ip_source=interface"
+                uci set "ddns.$section.ip_interface=pppoe-WAN"
+                uci set "ddns.$section.force_ipversion=0"
+                uci set "ddns.$section.use_https=1"
+                uci set "ddns.$section.cacert=/etc/ssl/certs/ca-certificates.crt"
+                ;;
+        esac
+    }
+    config_load ddns
+    config_foreach repair_ddns service
+    uci commit ddns
+}
+/etc/init.d/codex-proxy enable
+exit 0

@@ -1,0 +1,47 @@
+#!/bin/bash
+set -euo pipefail
+. /usr/lib/natmap/common.sh
+payload="$1"
+tokens=$(jq -er '.tokens' <<< "$payload")
+INIT_GLOBAL_VAR TOKEN ZONE_ID
+eval "$tokens"
+port=$(jq -er '.port | select(. >= 1 and . <= 65535)' <<< "$payload")
+host=$(jq -er '.host' <<< "$payload")
+base="https://api.cloudflare.com/client/v4/zones/$ZONE_ID"
+api() {
+ local method="$1" path="$2" data="${3:-}" result
+ local args=(-4 -sS --fail-with-body --connect-timeout 10 --max-time 40 --retry 2 -X "$method" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json')
+ [ -z "$data" ] || args+=(-d "$data")
+ result=$(curl "${args[@]}" "$base/$path") || { logger -t natmap-origin 'Cloudflare API transport/request failure'; return 1; }
+ jq -e '.success == true' <<< "$result" >/dev/null || { logger -t natmap-origin "$(jq -c '.errors' <<< "$result")"; return 1; }
+ printf '%s' "$result"
+}
+# List rulesets distinguishes a missing phase from a permission failure.
+sets=$(api GET rulesets)
+sid=$(jq -r '.result[] | select(.phase == "http_request_origin" and .kind == "zone") | .id' <<< "$sets" | head -n1)
+ref="natmap_${host//./_}_auto_port"
+[ "$host" != "codex.fengown.top" ] || ref=natmap_codex_auto_port
+rule=$(jq -nc --arg ref "$ref" --arg host "$host" --argjson port "$port" '{ref:$ref,description:("NATMap "+$host+" automatic port"),expression:("http.host eq \""+$host+"\""),action:"route",action_parameters:{origin:{port:$port}},enabled:true}')
+if [ -z "$sid" ]; then
+ data=$(jq -nc --argjson rule "$rule" '{name:"NATMap Origin Rules",kind:"zone",phase:"http_request_origin",rules:[$rule]}')
+ api POST rulesets "$data" >/dev/null
+else
+ setdata=$(api GET "rulesets/$sid")
+ rid=$(jq -r --arg ref "$ref" '.result.rules[]? | select(.ref == $ref) | .id' <<< "$setdata" | head -n1)
+ if [ -n "$rid" ]; then
+  api PATCH "rulesets/$sid/rules/$rid" "$rule" >/dev/null
+ else
+  api POST "rulesets/$sid/rules" "$rule" >/dev/null
+ fi
+fi
+# The paired DNS updater uses proxied=true; retain existing rules and update only this host.
+ip=$(jq -er '.ip' <<< "$payload")
+records=$(api GET "dns_records?type=A&name=$host")
+did=$(jq -r '.result[0].id // empty' <<< "$records")
+dns=$(jq -nc --arg host "$host" --arg ip "$ip" '{type:"A",name:$host,content:$ip,ttl:1,proxied:true}')
+if [ -n "$did" ]; then
+ api PATCH "dns_records/$did" "$dns" >/dev/null
+else
+ api POST dns_records "$dns" >/dev/null
+fi
+logger -t natmap-origin "Updated $host origin port to $port"

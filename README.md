@@ -112,3 +112,14 @@ backend. The original `natmap` and `luci-app-natmap` packages are disabled to av
 conflicting service, configuration and LuCI files. Package source commits are
 recorded in each vendored package's `SOURCE` file. The workflow checks these
 selections after `make defconfig`. Configure mappings in LuCI after flashing.
+
+### DDNS and NATMap recovery
+
+The firmware includes the Cloudflare-Origin NATMap updater, with separate origin
+rules for each hostname, and the Codex/SSH HTTPS forwarding service. Existing
+Cloudflare IPv6 services use the provider API to check their actual origin IP;
+dynv6 IPv6 services obtain the address from `pppoe-WAN` without forcing IPv6 API
+transport. Tokens remain in the router configuration. Certificates and private
+keys are not included in the repository; `/etc/natmap/`, `/etc/codex-proxy/`, and
+`/etc/ssl/fengown/` are included in the sysupgrade preservation list. On a fresh
+install the HTTPS forwarding service stays idle until certificates are supplied.

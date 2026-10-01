@@ -9,7 +9,7 @@ PKG_NAME:=natmapt
 PKG_UPSTREAM_VERSION:=20260214
 PKG_UPSTREAM_GITHASH:=
 PKG_VERSION:=$(PKG_UPSTREAM_VERSION)$(if $(PKG_UPSTREAM_GITHASH),~$(call version_abbrev,$(PKG_UPSTREAM_GITHASH)))
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 SCRIPTS_VERSION:=0.2026.01.24
 
 PKG_SOURCE_SUBDIR:=$(PKG_UPSTREAM_NAME)-$(PKG_UPSTREAM_VERSION)
@@ -44,7 +44,7 @@ define Package/natmapt
   CATEGORY:=Network
   TITLE:=TCP/UDP port mapping tool for full cone NAT
   URL:=https://github.com/heiher/natmap
-  DEPENDS:=+curl +jsonfilter +bash
+  DEPENDS:=+curl +jsonfilter +bash +jq
 endef
 
 MAKE_FLAGS += REV_ID="$(PKG_VERSION)"
@@ -78,6 +78,7 @@ define Package/natmapt/install
 	$(INSTALL_BIN) ./files/notify/ntfy $(1)/etc/natmap/notify/
 	$(INSTALL_DIR) $(1)/etc/natmap/ddns
 	$(INSTALL_BIN) ./files/ddns/Cloudflare $(1)/etc/natmap/ddns/
+	$(INSTALL_BIN) ./files/ddns/Cloudflare-Origin $(1)/etc/natmap/ddns/
 endef
 
 define Package/natmapt-scripts/Default
