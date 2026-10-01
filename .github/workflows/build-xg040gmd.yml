@@ -137,6 +137,8 @@ jobs:
             CONFIG_PACKAGE_luci-i18n-cloudflared-zh-cn \
             CONFIG_PACKAGE_luci-app-passwall \
             CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray \
+            CONFIG_PACKAGE_v2ray-geoip \
+            CONFIG_PACKAGE_v2ray-geosite \
             CONFIG_PACKAGE_xray-core; do
             if ! grep -qx "${symbol}=y" .config; then
               echo "::error::Required configuration missing: ${symbol}=y"
@@ -167,6 +169,7 @@ jobs:
           bash -n local_packages/natmapt/files/ddns/Cloudflare-Origin
           mkdir -p openwrt/files
           cp -a files/. openwrt/files/
+          sh -n files/etc/uci-defaults/99-zz-passwall-geodata
           sh -n files/etc/uci-defaults/99-zz-xg040gmd-wan
           install -Dm755 files/etc/uci-defaults/99-zz-xg040gmd-wan \
             openwrt/files/etc/uci-defaults/99-zz-xg040gmd-wan
