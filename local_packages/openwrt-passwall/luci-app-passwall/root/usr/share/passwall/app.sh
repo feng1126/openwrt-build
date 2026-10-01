@@ -541,12 +541,13 @@ start_global() {
 	local server_host=$(config_n_get $NODE address)
 	local port=$(config_n_get $NODE port)
 	local type=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
+	local native_socks=$(config_n_get @global[0] native_socks "$(config_n_get $NODE native_socks 0)")
 
 	local is_socks_cfg=0
 	[ "$(config_get_type $NODE)" = "socks" ] && is_socks_cfg=1
 
 	if [ "$type" = "socks" ] || [ "$is_socks_cfg" = "1" ] ; then
-		if [ "$(config_n_get $NODE native_socks 0)" = "1" ] && [ "${DNS_MODE}" = "socks" ] && [ "$server_host" = "127.0.0.1" ]; then
+		if [ "$native_socks" = "1" ] && [ "${DNS_MODE}" = "socks" ] && [ "$server_host" = "127.0.0.1" ]; then
 			type="socks"
 		elif [ "${DNS_MODE}" = "xray" ]; then
 			type="xray"
@@ -601,7 +602,7 @@ start_global() {
 		_socks_flag=1
 		_socks_address=$server_host
 		_socks_port=$port
-		if [ "$(config_n_get $NODE native_socks 0)" = "1" ] && [ "$server_host" = "127.0.0.1" ]; then
+		if [ "$native_socks" = "1" ] && [ "$server_host" = "127.0.0.1" ]; then
 			# Reuse the local SOCKS listener for SmartDNS without a core relay.
 			node_socks_flag=1
 			GLOBAL_SOCKS_port=$port

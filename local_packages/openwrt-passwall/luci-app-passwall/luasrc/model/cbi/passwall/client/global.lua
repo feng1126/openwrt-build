@@ -118,6 +118,31 @@ if node_value then
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
+o = s:taboption("Main", ListValue, "native_socks", "透明转发方式", "轻量模式使用 ipt2socks 和本机 SOCKS 服务，需使用 SmartDNS 的 Socks 模式；自动模式按节点和 DNS 设置选择代理核心。")
+o:value("0", "自动选择核心")
+o:value("1", "轻量 SOCKS 转发（不启动全局 Xray）")
+o.default = "0"
+o.rmempty = false
+m:foreach("nodes", function(n)
+	if n.type == "Socks" and n.address == "127.0.0.1" then
+		o:depends("node", n[".name"])
+	end
+end)
+function o.cfgvalue(self, section)
+	return m:get(section, "native_socks") or current_node.native_socks or "0"
+end
+function o.validate(self, value, section)
+	if value == "1" then
+		local dns_shunt = s.fields["dns_shunt"]:formvalue(section) or m:get(section, "dns_shunt")
+		local dns_field = s.fields["smartdns_dns_mode"]
+		local dns_mode = dns_field and dns_field:formvalue(section) or m:get(section, "smartdns_dns_mode")
+		if dns_shunt ~= "smartdns" or dns_mode ~= "socks" then
+			return nil, "轻量 SOCKS 转发需要在 DNS 设置中选择 SmartDNS 和 Socks 模式。"
+		end
+	end
+	return value
+end
+
 -- Shunt Start
 if (has_singbox or has_xray) and #nodes_table > 0 then
 	if #normal_list > 0 or #iface_list > 0 then

@@ -32,10 +32,4 @@ o = s:option(Value, "username", translate("Username"))
 o = s:option(Value, "password", translate("Password"))
 o.password = true
 
-o = s:option(Flag, "native_socks", "轻量透明转发", "使用 ipt2socks 转发到本机 SOCKS 服务，减少内存占用。作为全局节点使用时，需在 DNS 设置中选择 SmartDNS 和 Socks 模式。")
-o.rewrite_option = "native_socks"
-o.default = "0"
-o.rmempty = false
-o:depends({ address = "127.0.0.1" })
-
 api.type_cbi_section(s1, s)
