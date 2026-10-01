@@ -118,7 +118,7 @@ if node_value then
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
-o = s:taboption("Main", ListValue, "native_socks", "透明转发方式", "轻量模式使用 ipt2socks 和本机 SOCKS 服务，需使用 SmartDNS 的 Socks 模式；自动模式按节点和 DNS 设置选择代理核心。")
+o = s:taboption("Main", ListValue, "native_socks", "透明转发方式", "轻量模式使用 ipt2socks 和本机 SOCKS 服务，支持 SmartDNS + Socks 或 ChinaDNS-NG + dns2socks；自动模式按节点和 DNS 设置选择代理核心。")
 o:value("0", "自动选择核心")
 o:value("1", "轻量 SOCKS 转发（不启动全局 Xray）")
 o.default = "0"
@@ -136,8 +136,10 @@ function o.validate(self, value, section)
 		local dns_shunt = s.fields["dns_shunt"]:formvalue(section) or m:get(section, "dns_shunt")
 		local dns_field = s.fields["smartdns_dns_mode"]
 		local dns_mode = dns_field and dns_field:formvalue(section) or m:get(section, "smartdns_dns_mode")
-		if dns_shunt ~= "smartdns" or dns_mode ~= "socks" then
-			return nil, "轻量 SOCKS 转发需要在 DNS 设置中选择 SmartDNS 和 Socks 模式。"
+		local remote_field = s.fields["dns_mode"]
+		local remote_mode = remote_field and remote_field:formvalue(section) or m:get(section, "dns_mode")
+		if not ((dns_shunt == "smartdns" and dns_mode == "socks") or (dns_shunt == "chinadns-ng" and remote_mode == "dns2socks")) then
+			return nil, "轻量 SOCKS 转发需要 SmartDNS + Socks 或 ChinaDNS-NG + dns2socks。"
 		end
 	end
 	return value
@@ -404,6 +406,14 @@ o.write = function(self, section, value)
 end
 
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address."))
+o.description = "轻量模式自动使用当前本机 SOCKS 节点；自动核心模式使用此处设置。"
+function o.cfgvalue(self, section)
+	local mode = s.fields["native_socks"]:formvalue(section) or m:get(section, "native_socks")
+	if mode == "1" and current_node.type == "Socks" and current_node.address == "127.0.0.1" then
+		return current_node.address .. ":" .. current_node.port
+	end
+	return Value.cfgvalue(self, section)
+end
 for k, v in pairs(socks_table) do o:value(v.id, v.remark) end
 o.default = socks_table[1].id
 o.validate = function(self, value, t)

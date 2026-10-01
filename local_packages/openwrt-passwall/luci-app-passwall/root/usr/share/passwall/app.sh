@@ -542,8 +542,12 @@ start_global() {
 	local port=$(config_n_get $NODE port)
 	local type=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
 	local native_socks=$(config_n_get @global[0] native_socks "$(config_n_get $NODE native_socks 0)")
+	local native_dns=0
+	case "${DNS_SHUNT}:${DNS_MODE}" in
+		smartdns:socks|chinadns-ng:dns2socks) native_dns=1 ;;
+	esac
 	# Without a core, reuse the local SOCKS listener for both forwarding and DNS.
-	if [ "$type" = "socks" ] && [ "$server_host" = "127.0.0.1" ] && [ "${DNS_MODE}" = "socks" ] && [ -z "${SINGBOX_BIN}${XRAY_BIN}" ]; then
+	if [ "$type" = "socks" ] && [ "$server_host" = "127.0.0.1" ] && [ "$native_dns" = "1" ] && [ -z "${SINGBOX_BIN}${XRAY_BIN}" ]; then
 		native_socks=1
 	fi
 
@@ -551,7 +555,7 @@ start_global() {
 	[ "$(config_get_type $NODE)" = "socks" ] && is_socks_cfg=1
 
 	if [ "$type" = "socks" ] || [ "$is_socks_cfg" = "1" ] ; then
-		if [ "$native_socks" = "1" ] && [ "${DNS_MODE}" = "socks" ] && [ "$server_host" = "127.0.0.1" ]; then
+		if [ "$native_socks" = "1" ] && [ "$native_dns" = "1" ] && [ "$server_host" = "127.0.0.1" ]; then
 			type="socks"
 		elif [ "${DNS_MODE}" = "xray" ]; then
 			type="xray"
@@ -610,6 +614,7 @@ start_global() {
 			# Reuse the local SOCKS listener for SmartDNS without a core relay.
 			node_socks_flag=1
 			GLOBAL_SOCKS_port=$port
+			set_cache_var "ACL_GLOBAL_native_socks" "1"
 		fi
 		_socks_username=$(config_n_get $NODE username)
 		_socks_password=$(config_n_get $NODE password)
@@ -1125,6 +1130,8 @@ start_dns() {
 	case "$DNS_MODE" in
 	dns2socks)
 		local dns2socks_socks_server=$(echo $(config_n_get @global[0] socks_server 127.0.0.1:1080) | sed "s/#/:/g")
+		# Native forwarding has no separate core listener on port 1070.
+		[ "$(get_cache_var ACL_GLOBAL_native_socks)" = "1" ] && dns2socks_socks_server="${GLOBAL_SOCKS_server}"
 		run_dns2socks socks=$dns2socks_socks_server listen_address=127.0.0.1 listen_port=${NEXT_DNS_LISTEN_PORT} dns=$REMOTE_DNS cache=$DNS_CACHE
 		echolog "  - dns2socks(${TUN_DNS})，${dns2socks_socks_server} -> tcp://${REMOTE_DNS}"
 	;;
