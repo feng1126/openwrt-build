@@ -542,6 +542,10 @@ start_global() {
 	local port=$(config_n_get $NODE port)
 	local type=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
 	local native_socks=$(config_n_get @global[0] native_socks "$(config_n_get $NODE native_socks 0)")
+	# Without a core, reuse the local SOCKS listener for both forwarding and DNS.
+	if [ "$type" = "socks" ] && [ "$server_host" = "127.0.0.1" ] && [ "${DNS_MODE}" = "socks" ] && [ -z "${SINGBOX_BIN}${XRAY_BIN}" ]; then
+		native_socks=1
+	fi
 
 	local is_socks_cfg=0
 	[ "$(config_get_type $NODE)" = "socks" ] && is_socks_cfg=1
