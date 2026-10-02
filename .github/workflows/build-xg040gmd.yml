@@ -1,4 +1,4 @@
-name: Build XG-040G-MD OpenWrt
+name: Build XG-040G-MD NPU 7.7 Test
 
 on:
   workflow_dispatch:
@@ -213,8 +213,14 @@ jobs:
             make "package/$pkg/prepare" V=s 2>&1 | tee -a ../build-logs/fullcone-prepare.log
           done
           grep -R -q 'NFTNL_EXPR_FULLCONE' build_dir/target-*/libnftnl-*/include/libnftnl/expr.h
-          grep -R -q 'NFT_NAT_FULLCONE' build_dir/target-*/nftables-*/include/statement.h
+          grep -R -q 'NFT_NAT_FULLCONE' build_dir/target-*/nftables-*/nftables-*/include/statement.h
           grep -R -q 'nft_try_fullcone' build_dir/target-*/firewall4-*/root/usr/share/ucode/fw4.uc
+
+      - name: Verify embedded NPU 7.7 firmware
+        run: |
+          echo "e743d1b59a9ca6d043e38ff71075e8d28702a104b94abb17a4035514efda4643  openwrt/files/lib/firmware/airoha/en7581_npu_rv32.bin" | sha256sum -c -
+          echo "61a75afb052feed2ceb2f3023e16f50317c05c78f9c8e564bf01924ce39c7ec1  openwrt/files/lib/firmware/airoha/en7581_npu_data.bin" | sha256sum -c -
+          cp openwrt/files/lib/firmware/airoha/*npu* build-logs/
 
       - name: Build firmware
         shell: bash
@@ -233,6 +239,13 @@ jobs:
           fi
           echo "Parallel build failed; retrying with one job for clearer diagnostics."
           make -j1 V=s 2>&1 | tee ../build-logs/build-retry.log
+
+      - name: Verify NPU firmware in assembled root filesystem
+        run: |
+          root_dir=$(find openwrt/build_dir/target-* -maxdepth 1 -type d -name "root-airoha" -print -quit)
+          test -n "$root_dir"
+          echo "e743d1b59a9ca6d043e38ff71075e8d28702a104b94abb17a4035514efda4643  $root_dir/lib/firmware/airoha/en7581_npu_rv32.bin" | sha256sum -c -
+          echo "61a75afb052feed2ceb2f3023e16f50317c05c78f9c8e564bf01924ce39c7ec1  $root_dir/lib/firmware/airoha/en7581_npu_data.bin" | sha256sum -c -
 
       - name: Upload build logs
         if: always()
@@ -263,38 +276,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: xg040gmd-openwrt-${{ steps.source.outputs.artifact_branch || 'unknown' }}
+          name: xg040gmd-npu77-test-${{ steps.source.outputs.artifact_branch || 'unknown' }}
           path: artifact
           retention-days: 14
 
-      - name: Publish firmware release
-        if: success()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          BUILD_BRANCH: ${{ steps.source.outputs.branch }}
-          ARTIFACT_BRANCH: ${{ steps.source.outputs.artifact_branch }}
-        run: |
-          set -euo pipefail
-          tag="openwrt-${ARTIFACT_BRANCH}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          mapfile -d '' files < <(find artifact/targets -type f ! -path '*/packages/*' -print0 | sort -z)
-          if ! printf '%s\n' "${files[@]}" | grep -Eq '\.(bin|itb|img|ubi|img\.gz)$'; then
-            echo "::error::No firmware image found; refusing to publish release"
-            exit 1
-          fi
-          files+=(artifact/openwrt.config)
-          {
-            echo "XG-040G-MD OpenWrt firmware"
-            echo
-            echo "Source branch: ${BUILD_BRANCH}"
-            echo "Build: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo
-            cat build-logs/source.txt
-          } > release-notes.md
-          gh api "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA"
-          gh release create "$tag" "${files[@]}" \
-            --verify-tag \
-            --title "XG-040G-MD OpenWrt ${BUILD_BRANCH} · ${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}" \
-            --notes-file release-notes.md --draft
-          gh release edit "$tag" --draft=false --latest
