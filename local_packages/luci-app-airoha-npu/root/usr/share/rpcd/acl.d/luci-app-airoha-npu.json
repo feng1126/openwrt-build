@@ -1,26 +1,15 @@
 {
 	"luci-app-airoha-npu": {
-		"description": "Control Airoha hardware flow offloading through firewall UCI settings",
+		"description": "Grant access to Airoha SoC status (NPU + CPU + Overclock)",
 		"read": {
-			"uci": [
-				"firewall"
-			],
-			"file": {
-				"/sys/bus/platform/drivers/airoha-npu": [
-					"list"
-				]
-			},
 			"ubus": {
-				"luci.airoha_npu": [
-					"getStatus",
-					"getPpeEntries"
-				]
+				"luci.airoha_npu": [ "getStatus", "getPpeEntries", "getTokenInfo", "getFrameEngine" ]
 			}
 		},
 		"write": {
-			"uci": [
-				"firewall"
-			]
+			"ubus": {
+				"luci.airoha_npu": [ "setGovernor", "setMaxFreq", "setOverclock" ]
+			}
 		}
 	}
 }
