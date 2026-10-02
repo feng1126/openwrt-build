@@ -28,9 +28,4 @@
     config_foreach repair_ddns service
     uci commit ddns
 }
-# Convert any preserved older proxy config to plain HTTP.
-if [ -f /etc/codex-proxy/haproxy.cfg ]; then
-    sed -i -E 's/ ssl crt [^ ]+//g; s/X-Forwarded-Proto https/X-Forwarded-Proto http/g' /etc/codex-proxy/haproxy.cfg
-fi
-/etc/init.d/codex-proxy enable
 exit 0

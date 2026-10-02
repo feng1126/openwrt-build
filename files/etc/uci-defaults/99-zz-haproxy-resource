@@ -1,6 +1,6 @@
 #!/bin/sh
 # The package's stock example only serves a health-check on port 60000.
-# Keep user-configured HAProxy services; codex-proxy handles our web routes.
+# Keep user-configured HAProxy services.
 [ -x /etc/init.d/haproxy ] || exit 0
 [ -f /etc/haproxy.cfg ] || exit 0
 if cmp -s /etc/haproxy.cfg /rom/etc/haproxy.cfg &&
