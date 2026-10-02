@@ -213,7 +213,7 @@ jobs:
             make "package/$pkg/prepare" V=s 2>&1 | tee -a ../build-logs/fullcone-prepare.log
           done
           grep -R -q 'NFTNL_EXPR_FULLCONE' build_dir/target-*/libnftnl-*/include/libnftnl/expr.h
-          grep -R -q 'NFT_NAT_FULLCONE' build_dir/target-*/nftables-*/include/statement.h
+          grep -R -q 'NFT_NAT_FULLCONE' build_dir/target-*/nftables-*/nftables-*/include/statement.h
           grep -R -q 'nft_try_fullcone' build_dir/target-*/firewall4-*/root/usr/share/ucode/fw4.uc
 
       - name: Build firmware
