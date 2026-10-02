@@ -130,7 +130,7 @@ jobs:
             CONFIG_PACKAGE_luci-app-airoha-npu \
             CONFIG_KERNEL_DEVMEM \
             CONFIG_KERNEL_DEBUG_FS \
-            CONFIG_BUSYBOX_CONFIG_DEVMEM \
+            CONFIG_BUSYBOX_DEFAULT_DEVMEM \
             CONFIG_PACKAGE_luci \
             CONFIG_PACKAGE_luci-ssl \
             CONFIG_LUCI_LANG_zh_Hans \
