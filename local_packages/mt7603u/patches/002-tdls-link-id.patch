@@ -1,0 +1,14 @@
+diff --git a/os/linux/cfg80211/cfg80211.c b/os/linux/cfg80211/cfg80211.c
+index 9aa9eb9..4419d4d 100755
+--- a/os/linux/cfg80211/cfg80211.c
++++ b/os/linux/cfg80211/cfg80211.c
+@@ -2310,6 +2310,9 @@ static int CFG80211_OpsTdlsMgmt
+ 	IN const u8 *peer,
+ #else
+     IN u8 *peer,
++#endif
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
++    IN int link_id,
+ #endif
+     IN u8 action_code, 
+     IN u8 dialog_token,

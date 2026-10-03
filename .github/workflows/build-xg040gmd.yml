@@ -11,9 +11,15 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: sdk.tar.zst
+          key: mt7603u-sdk-43167de7080a2f5f1e57f9f319e97be0af29c936c42f6d78e283379401c11348
       - name: Download pinned SDK
         run: |
-          curl -fL --retry 3 https://downloads.openwrt.org/snapshots/targets/airoha/an7581/openwrt-sdk-airoha-an7581_gcc-14.4.0_musl.Linux-x86_64.tar.zst -o sdk.tar.zst
+          if [ ! -f sdk.tar.zst ]; then
+            curl -fL --retry 3 --max-time 900 https://downloads.openwrt.org/snapshots/targets/airoha/an7581/openwrt-sdk-airoha-an7581_gcc-14.4.0_musl.Linux-x86_64.tar.zst -o sdk.tar.zst
+          fi
           echo '43167de7080a2f5f1e57f9f319e97be0af29c936c42f6d78e283379401c11348  sdk.tar.zst' | sha256sum -c -
           mkdir sdk
           tar --zstd -xf sdk.tar.zst -C sdk --strip-components=1
@@ -27,7 +33,7 @@ jobs:
           printf '%s\n' 'CONFIG_PACKAGE_kmod-mt7603u=m' 'CONFIG_PACKAGE_kmod-cfg80211=m' 'CONFIG_PACKAGE_mt7603-firmware=m' 'CONFIG_ALL_NONSHARED=n' 'CONFIG_ALL_KMODS=n' 'CONFIG_ALL=n' > .config
           make defconfig
           set -o pipefail
-          make package/mt7603u/compile -j4 V=s 2>&1 | tee ../logs/build.log
+          make package/mt7603u/compile -k -j4 V=s 2>&1 | tee ../logs/build.log
           find bin -name '*mt7603*' -o -name '*cfg80211*'
           find build_dir -name mt7603usta.ko -exec modinfo {} \; | tee ../logs/module-info.txt
       - uses: actions/upload-artifact@v4
