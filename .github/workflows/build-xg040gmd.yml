@@ -111,10 +111,6 @@ jobs:
           cp .config ../build-logs/config.seed
           set -o pipefail
           make defconfig 2>&1 | tee ../build-logs/defconfig.log
-          python3 ../scripts/enable-all-ddns.py
-          make defconfig 2>&1 | tee ../build-logs/defconfig-ddns.log
-          python3 ../scripts/enable-all-ddns.py --check
-          cp .config ../build-logs/config.ddns
           for symbol in \
             CONFIG_TARGET_airoha \
             CONFIG_TARGET_airoha_an7581 \
