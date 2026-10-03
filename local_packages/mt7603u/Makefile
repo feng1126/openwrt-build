@@ -21,8 +21,8 @@ define KernelPackage/mt7603u
 endef
 
 define Build/Prepare
-  $(call Build/Prepare/Default)
-  $(CP) $(PKG_BUILD_DIR)/Makefile.backports $(PKG_BUILD_DIR)/Makefile
+	$(call Build/Prepare/Default)
+	$(CP) $(PKG_BUILD_DIR)/Makefile.backports $(PKG_BUILD_DIR)/Makefile
 endef
 
 NOSTDINC_FLAGS := \
@@ -35,13 +35,13 @@ NOSTDINC_FLAGS := \
   -include backport/backport.h
 
 define Build/Compile
-  +$(KERNEL_MAKE) $(PKG_JOBS) M="$(PKG_BUILD_DIR)" \
+	+$(KERNEL_MAKE) $(PKG_JOBS) M="$(PKG_BUILD_DIR)" \
     NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)" modules
 endef
 
 define KernelPackage/mt7603u/install
-  $(INSTALL_DIR) $(1)/lib/firmware
-  $(INSTALL_DATA) $(PKG_BUILD_DIR)/mt7603_firmware/MT7603USTA.dat $(1)/lib/firmware/
+	$(INSTALL_DIR) $(1)/lib/firmware
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mt7603_firmware/MT7603USTA.dat $(1)/lib/firmware/
 endef
 
 $(eval $(call KernelPackage,mt7603u))
