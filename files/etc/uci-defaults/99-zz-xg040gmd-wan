@@ -1,11 +1,18 @@
 #!/bin/sh
-# Apply after 99-default-settings on each newly installed firmware.
+# Apply network defaults only on a fresh installation.
 set -eu
 
 case "$(cat /tmp/sysinfo/board_name)" in
 	nokia,xg-040g-md|nokia,xg-040g-md-ubi) ;;
 	*) exit 0 ;;
 esac
+
+# OpenWrt restores these archives before running uci-defaults. Skip even
+# legacy upgrades that do not yet contain our persistent initialization flag.
+if [ -f /sysupgrade.tgz ] || [ -f /tmp/sysupgrade.tar ] ||
+   [ "$(uci -q get network.globals.xg040gmd_defaults || true)" = 1 ]; then
+	exit 0
+fi
 
 # Keep the copper uplink out of the LAN bridge.
 bridge=
@@ -90,6 +97,8 @@ if [ -z "$forwarding" ]; then
 fi
 
 # Preserve upstream DHCPv6/ICMPv6 rules and existing firewall policies.
+uci -q get network.globals >/dev/null || uci set network.globals=globals
+uci set network.globals.xg040gmd_defaults=1
 uci commit network
 uci commit firewall
 exit 0

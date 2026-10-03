@@ -8,6 +8,9 @@ uci set system.@system[0].timezone='CST-8'
 	uci commit luci
 
 
+# Preserve LAN and DHCP choices during retained-config upgrades and reruns.
+if [ ! -f /sysupgrade.tgz ] && [ ! -f /tmp/sysupgrade.tar ] &&
+   [ "$(uci -q get network.globals.xg040gmd_defaults)" != 1 ]; then
 #        uci set network.globals.ula_prefix='2fff::/64'
 #        uci set network.lan.ip6assign='64'
         uci set network.lan.ipaddr='10.10.10.10'
@@ -27,6 +30,8 @@ uci set system.@system[0].timezone='CST-8'
 #        uci set dhcp.lan.dhcp_option='6,10.10.10.28'
         uci commit dhcp
 
+fi
+
         wifi down 
         wifi up
 
@@ -42,8 +47,7 @@ if ! uci -q get system.@imm_init[0].lang > "/dev/null"; then
 	EOF
 fi
 
-sed -i "/log-facility/d" "/etc/dnsmasq.conf"
-uci set dhcp.@dnsmasq[0].logdhcp=1
+uci set dhcp.@dnsmasq[0].logdhcp=0
 uci commit dhcp
 
 sed -i '/option disabled/d' /etc/config/wireless

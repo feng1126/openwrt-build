@@ -99,15 +99,20 @@ after `99-default-settings`. It only applies to `nokia,xg-040g-md` and
 - `lan1`: `WAN` uses IPv4 DHCP; `WAN6` uses DHCPv6 with `reqaddress=try`
   and `reqprefix=no`, matching the tested upstream-router setup.
 - `lan2`, `lan3`, `lan4`: remain in `br-lan`, using the default LAN address
-  `10.10.10.10/24`. DHCP events are logged to the system log.
+  `10.10.10.10/24`. Detailed DHCP event logging is disabled.
 - Both WAN interfaces belong to the `wan` firewall zone, with IPv4
   masquerading, MSS clamping and LAN-to-WAN forwarding. Existing zone
   policies and the standard DHCPv6/ICMPv6 rules are preserved.
 
-The script replaces WAN/WAN6 interface definitions and the LAN address even
-when upgrading with retained settings. Repeated execution produces the same
-configuration. IPv6 prefix delegation to downstream LAN clients is not
-requested. DDNS credentials and per-device service settings are not included.
+Network defaults are applied only on a fresh installation or an upgrade
+without retained settings. On a retained-config upgrade, the OpenWrt restore
+archive causes both network initialization scripts to preserve WAN, LAN,
+firewall and DHCP choices, including PPPoE credentials. A persistent
+`network.globals.xg040gmd_defaults=1` flag prevents subsequent reruns from
+resetting the network. Detailed DHCP event logging is explicitly disabled,
+including when upgrading from a firmware that enabled it. IPv6 prefix
+delegation to downstream LAN clients is not requested on a fresh installation.
+DDNS credentials and per-device service settings are not included.
 The build verifies that the target profile and `odhcp6c` are enabled before
 installing the script. IPv6 still requires an upstream IPv6 router/service.
 
