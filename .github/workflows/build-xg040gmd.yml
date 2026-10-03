@@ -151,9 +151,6 @@ jobs:
             CONFIG_PACKAGE_luci-app-natmapt \
             CONFIG_PACKAGE_luci-i18n-natmapt-zh-cn \
             CONFIG_PACKAGE_luci-compat \
-            CONFIG_PACKAGE_cloudflared \
-            CONFIG_PACKAGE_luci-app-cloudflared \
-            CONFIG_PACKAGE_luci-i18n-cloudflared-zh-cn \
             CONFIG_PACKAGE_luci-app-passwall \
             CONFIG_PACKAGE_ipt2socks \
             CONFIG_PACKAGE_chinadns-ng \
