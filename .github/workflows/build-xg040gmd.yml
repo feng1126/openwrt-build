@@ -181,7 +181,6 @@ jobs:
           set -euo pipefail
           grep -qx 'CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md-ubi=y' openwrt/.config
           grep -qx 'CONFIG_PACKAGE_odhcp6c=y' openwrt/.config
-          sh -n files/etc/uci-defaults/98-ddns-recovery
           bash -n local_packages/natmapt/files/ddns/Cloudflare-Origin
           mkdir -p openwrt/files
           cp -a files/. openwrt/files/
