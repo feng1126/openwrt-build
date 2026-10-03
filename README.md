@@ -29,13 +29,12 @@ Run manually from GitHub:
 The selected repository, branch and source commit are saved in `source.txt` in
 the build log artifact.
 
-The firmware includes standalone Hysteria, HAProxy, ipt2socks, ChinaDNS-NG and
-dns2socks; Xray and Sing-box are excluded and checked after `make defconfig`.
-PassWall's Main tab selects automatic or lightweight local SOCKS forwarding.
-Lightweight forwarding supports SmartDNS + Socks or ChinaDNS-NG + dns2socks.
-The DNS tab allows LAN DNS servers to bypass DNS redirection to prevent loops.
-Retained Xray HY2 nodes migrate to Hysteria on first boot; other Xray protocols
-are unsupported by this firmware. SmartDNS remains available as an alternative.
+PassWall and its dependency packages are vendored unchanged from the official
+[Openwrt-Passwall](https://github.com/Openwrt-Passwall) GitHub repositories.
+The source commits are recorded in `local_packages/passwall-upstream.json`
+and copied to the build logs. PassWall component choices use upstream defaults;
+Hysteria remains available in the firmware. There are no custom SOCKS forwarding,
+DNS bypass controls, automatic node migrations or rule-update overrides.
 
 The build configuration is stored in `configs/xg040gmd.config`. Edit this file
 to change packages; configuration is not passed through the workflow input form,

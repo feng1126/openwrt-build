@@ -118,33 +118,6 @@ if node_value then
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
-o = s:taboption("Main", ListValue, "native_socks", "透明转发方式", "轻量模式使用 ipt2socks 和本机 SOCKS 服务，支持 SmartDNS + Socks 或 ChinaDNS-NG + dns2socks；自动模式按节点和 DNS 设置选择代理核心。")
-o:value("0", "自动选择核心")
-o:value("1", "轻量 SOCKS 转发（不启动全局 Xray）")
-o.default = "0"
-o.rmempty = false
-m:foreach("nodes", function(n)
-	if n.type == "Socks" and n.address == "127.0.0.1" then
-		o:depends("node", n[".name"])
-	end
-end)
-function o.cfgvalue(self, section)
-	return m:get(section, "native_socks") or current_node.native_socks or "0"
-end
-function o.validate(self, value, section)
-	if value == "1" then
-		local dns_shunt = s.fields["dns_shunt"]:formvalue(section) or m:get(section, "dns_shunt")
-		local dns_field = s.fields["smartdns_dns_mode"]
-		local dns_mode = dns_field and dns_field:formvalue(section) or m:get(section, "smartdns_dns_mode")
-		local remote_field = s.fields["dns_mode"]
-		local remote_mode = remote_field and remote_field:formvalue(section) or m:get(section, "dns_mode")
-		if not ((dns_shunt == "smartdns" and dns_mode == "socks") or (dns_shunt == "chinadns-ng" and remote_mode == "dns2socks")) then
-			return nil, "轻量 SOCKS 转发需要 SmartDNS + Socks 或 ChinaDNS-NG + dns2socks。"
-		end
-	end
-	return value
-end
-
 -- Shunt Start
 if (has_singbox or has_xray) and #nodes_table > 0 then
 	if #normal_list > 0 or #iface_list > 0 then
@@ -206,21 +179,21 @@ o:depends({ _node_sel_shunt = "1",  ['!reverse'] = true })
 -- [[ DNS Settings ]]--
 s:tab("DNS", translate("DNS"))
 
-o = s:taboption("DNS", DynamicList, "dns_redirect_exempt", "DNS 重定向例外来源", "填写局域网 DNS 服务器的 IPv4 地址，允许它直接查询上游，避免与路由器形成 DNS 循环。")
-o.datatype = "ip4addr"
-o.rmempty = true
-
 o = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
+o.write = function(self, section, value)
+	local old = m:get(section, self.option)
+	if old and old ~= value then
+		m:set(section, "flush_set", "1")
+	end
+	if value ~= "smartdns" then
+		m:del(section, "group_domestic")
+	end
+	return ListValue.write(self, section, value)
+end
 if api.is_finded("smartdns") then
 	o:value("smartdns", "SmartDNS")
-	o.write = function(self, section, value)
-		if value ~= "smartdns" then
-			m:del(section, "group_domestic")
-		end
-		return ListValue.write(self, section, value)
-	end
 
 	o = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
 	o.placeholder = "local"
@@ -410,14 +383,6 @@ o.write = function(self, section, value)
 end
 
 o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"), translate("Make sure socks service is available on this address."))
-o.description = "轻量模式自动使用当前本机 SOCKS 节点；自动核心模式使用此处设置。"
-function o.cfgvalue(self, section)
-	local mode = s.fields["native_socks"]:formvalue(section) or m:get(section, "native_socks")
-	if mode == "1" and current_node.type == "Socks" and current_node.address == "127.0.0.1" then
-		return current_node.address .. ":" .. current_node.port
-	end
-	return Value.cfgvalue(self, section)
-end
 for k, v in pairs(socks_table) do o:value(v.id, v.remark) end
 o.default = socks_table[1].id
 o.validate = function(self, value, t)

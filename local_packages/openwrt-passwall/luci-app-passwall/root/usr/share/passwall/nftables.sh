@@ -46,7 +46,7 @@ NFTSET_SHUNT6_STATIC="${NFTSET_SHUNT6}_static"
 FWMARK="0x50535731"
 
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
-FAKE_IP="198.18.0.0/15"
+FAKE_IP="198.18.0.0/16"
 FAKE_IP_6="2001:2::/48"
 
 USE_GEOVIEW=0
@@ -1164,12 +1164,6 @@ add_firewall_rule() {
 
 	nft "add chain $NFTABLE_NAME PSW_DNS"
 	nft "flush chain $NFTABLE_NAME PSW_DNS"
-	# A downstream DNS server must resolve its own upstreams without a loop.
-	local dns_source
-	for dns_source in $(config_n_get @global[0] dns_redirect_exempt); do
-		case "$dns_source" in ''|*[!0-9./]*) continue ;; esac
-		nft "add rule $NFTABLE_NAME PSW_DNS ip saddr $dns_source meta l4proto { tcp, udp } th dport 53 counter return comment \"DNS upstream source\""
-	done
 	if [ $(config_n_get @global[0] dns_redirect "1") = "0" ]; then
 		#Only hijack when dest address is local IP
 		nft "insert rule $NFTABLE_NAME dstnat ip saddr @${NFTSET_LAN} ip daddr @${NFTSET_LOCAL} jump PSW_DNS"
@@ -1612,6 +1606,7 @@ stop() {
 		rm -rf $TMP_PATH2/singbox*
 		rm -rf $TMP_PATH2/dnsmasq*
 		rm -rf $TMP_PATH2/geo_output
+		rm -rf $TMP_PATH2/user_rules
 	}
 	flush_include
 }

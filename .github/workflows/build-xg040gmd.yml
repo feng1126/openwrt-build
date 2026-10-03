@@ -73,6 +73,7 @@ jobs:
           test -s package/custom/luci-app-socat/root/etc/uci-defaults/luci-app-socat
           cp -a ../local_packages/openwrt-passwall/luci-app-passwall package/custom/luci-app-passwall
           cp -a ../local_packages/openwrt-passwall-packages/. package/custom/
+          cp ../local_packages/passwall-upstream.json ../build-logs/passwall-upstream.json
           echo "===== local custom packages ====="
           find package/custom -maxdepth 2 -name Makefile | sort
 
@@ -154,7 +155,6 @@ jobs:
             CONFIG_PACKAGE_luci-app-cloudflared \
             CONFIG_PACKAGE_luci-i18n-cloudflared-zh-cn \
             CONFIG_PACKAGE_luci-app-passwall \
-            CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Hysteria \
             CONFIG_PACKAGE_ipt2socks \
             CONFIG_PACKAGE_chinadns-ng \
             CONFIG_PACKAGE_dns2socks \
@@ -166,14 +166,6 @@ jobs:
               exit 1
             fi
           done
-          if grep -Eq '^CONFIG_PACKAGE_(sing-box|luci-app-passwall_INCLUDE_SingBox)=(y|m)$' .config; then
-            echo "::error::sing-box must remain disabled in this firmware"
-            exit 1
-          fi
-          if grep -Eq '^CONFIG_PACKAGE_(xray-core|xray-plugin|luci-app-passwall_INCLUDE_Xray|luci-app-passwall_INCLUDE_Xray_Plugin)=(y|m)$' .config; then
-            echo "::error::Xray must remain disabled; use Hysteria and native SOCKS forwarding"
-            exit 1
-          fi
           if grep -Eq '^CONFIG_PACKAGE_(natmap|luci-app-natmap|luci-i18n-natmap-zh-cn)=(y|m)$' .config; then
             echo "::error::Original NATMap packages conflict with the enhanced NATMap packages"
             exit 1
@@ -193,7 +185,6 @@ jobs:
           bash -n local_packages/natmapt/files/ddns/Cloudflare-Origin
           mkdir -p openwrt/files
           cp -a files/. openwrt/files/
-          sh -n files/etc/uci-defaults/99-zz-passwall-geodata
           sh -n files/etc/uci-defaults/99-zz-xg040gmd-wan
           install -Dm755 files/etc/uci-defaults/99-zz-xg040gmd-wan \
             openwrt/files/etc/uci-defaults/99-zz-xg040gmd-wan

@@ -1,0 +1,10 @@
+{
+  "openwrt-passwall": {
+    "repository": "https://github.com/Openwrt-Passwall/openwrt-passwall.git",
+    "commit": "eca13dc2330e39745001cf2cbe0513bcc8a10b4f"
+  },
+  "openwrt-passwall-packages": {
+    "repository": "https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git",
+    "commit": "3ba85f8264c82211b49f0655677ab3a0727a68cc"
+  }
+}

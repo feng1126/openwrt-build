@@ -541,23 +541,12 @@ start_global() {
 	local server_host=$(config_n_get $NODE address)
 	local port=$(config_n_get $NODE port)
 	local type=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
-	local native_socks=$(config_n_get @global[0] native_socks "$(config_n_get $NODE native_socks 0)")
-	local native_dns=0
-	case "${DNS_SHUNT}:${DNS_MODE}" in
-		smartdns:socks|chinadns-ng:dns2socks) native_dns=1 ;;
-	esac
-	# Without a core, reuse the local SOCKS listener for both forwarding and DNS.
-	if [ "$type" = "socks" ] && [ "$server_host" = "127.0.0.1" ] && [ "$native_dns" = "1" ] && [ -z "${SINGBOX_BIN}${XRAY_BIN}" ]; then
-		native_socks=1
-	fi
 
 	local is_socks_cfg=0
 	[ "$(config_get_type $NODE)" = "socks" ] && is_socks_cfg=1
 
 	if [ "$type" = "socks" ] || [ "$is_socks_cfg" = "1" ] ; then
-		if [ "$native_socks" = "1" ] && [ "$native_dns" = "1" ] && [ "$server_host" = "127.0.0.1" ]; then
-			type="socks"
-		elif [ "${DNS_MODE}" = "xray" ]; then
+		if [ "${DNS_MODE}" = "xray" ]; then
 			type="xray"
 		elif [ "${DNS_MODE}" = "sing-box" ]; then
 			type="sing-box"
@@ -610,12 +599,6 @@ start_global() {
 		_socks_flag=1
 		_socks_address=$server_host
 		_socks_port=$port
-		if [ "$native_socks" = "1" ] && [ "$server_host" = "127.0.0.1" ]; then
-			# Reuse the local SOCKS listener for SmartDNS without a core relay.
-			node_socks_flag=1
-			GLOBAL_SOCKS_port=$port
-			set_cache_var "ACL_GLOBAL_native_socks" "1"
-		fi
 		_socks_username=$(config_n_get $NODE username)
 		_socks_password=$(config_n_get $NODE password)
 		[ -z "$can_ipt" ] && {
@@ -947,6 +930,8 @@ clean_crontab() {
 
 start_crontab() {
 	local update_loop
+	local setsid_cmd=""
+	command -v setsid >/dev/null 2>&1 && setsid_cmd="setsid "
 
 	if [ "$ENABLED_DEFAULT_ACL" = "1" ] || [ "$ENABLED_ACLS" = "1" ]; then
 		local start_daemon=$(config_n_get @global_delay[0] start_daemon 0)
@@ -993,7 +978,7 @@ start_crontab() {
 		if [ "$week" = "8" ]; then
 			update_loop=1
 		else
-			echo "$svr_t /etc/init.d/$CONFIG $action cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$svr_t ${setsid_cmd}/etc/init.d/$CONFIG $action cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		fi
 		echolog "$logmsg"
 	}
@@ -1013,7 +998,7 @@ start_crontab() {
 		if [ "$rules_update_week_mode" = "8" ]; then
 			update_loop=1
 		else
-			echo "$rule_t lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$rule_t ${setsid_cmd}lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		fi
 		echolog "配置定时任务：自动更新规则。"
 	fi
@@ -1041,7 +1026,7 @@ start_crontab() {
 			if [ "$sub_update_week_mode" = "8" ]; then
 				update_loop=1
 			else
-				echo "$sub_t lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+				echo "$sub_t ${setsid_cmd}lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 			fi
 		done
 		rm -rf "$TMP_SUB_PATH"
@@ -1065,6 +1050,22 @@ stop_crontab() {
 	clean_crontab
 	/etc/init.d/cron restart
 	#echolog "清除定时执行命令。"
+}
+
+restart_smartdns() {
+	rm -rf /tmp/smartdns.cache
+	/etc/init.d/smartdns reload >/dev/null 2>&1
+}
+
+del_smartdns_conf() {
+	command -v smartdns >/dev/null 2>&1 || return
+	rm -rf "/tmp/etc/smartdns/${CONFIG}.conf"
+	local custom_conf="/etc/smartdns/custom.conf"
+	if [ -f "$custom_conf" ] && grep -q "${CONFIG}" "$custom_conf"; then
+		sed -i "/${CONFIG}/d" "$custom_conf" >/dev/null 2>&1
+		rm -rf /tmp/smartdns.cache
+		/etc/init.d/smartdns reload >/dev/null 2>&1
+	fi
 }
 
 start_dns() {
@@ -1130,8 +1131,6 @@ start_dns() {
 	case "$DNS_MODE" in
 	dns2socks)
 		local dns2socks_socks_server=$(echo $(config_n_get @global[0] socks_server 127.0.0.1:1080) | sed "s/#/:/g")
-		# Native forwarding has no separate core listener on port 1070.
-		[ "$(get_cache_var ACL_GLOBAL_native_socks)" = "1" ] && dns2socks_socks_server="${GLOBAL_SOCKS_server}"
 		run_dns2socks socks=$dns2socks_socks_server listen_address=127.0.0.1 listen_port=${NEXT_DNS_LISTEN_PORT} dns=$REMOTE_DNS cache=$DNS_CACHE
 		echolog "  - dns2socks(${TUN_DNS})，${dns2socks_socks_server} -> tcp://${REMOTE_DNS}"
 	;;
@@ -1273,7 +1272,8 @@ start_dns() {
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 				-NODE ${NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 				-SUBNET ${subnet_ip:-0} -NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
-			source $APP_PATH/helper_smartdns.sh restart
+
+			restart_smartdns
 
 			USE_DEFAULT_DNS="chinadns_ng"
 		else
@@ -1756,7 +1756,7 @@ stop() {
 	unset XRAY_LOCATION_ASSET
 	unset SS_SYSTEM_DNS_RESOLVER_FORCE_BUILTIN
 	stop_crontab $1
-	source $APP_PATH/helper_smartdns.sh del
+	del_smartdns_conf
 	rm -rf $GLOBAL_DNSMASQ_CONF
 	rm -rf $GLOBAL_DNSMASQ_CONF_PATH
 	[ "1" = "1" ] && {

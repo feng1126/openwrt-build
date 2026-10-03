@@ -40,7 +40,7 @@ ip6t_m="$ip6t -t mangle -w"
 [ -z "$ip6t" ] || [ -z "$(lsmod | grep 'ip6table_nat')" ] && ip6t_n="eval #$ip6t_n"
 [ -z "$ip6t" ] || [ -z "$(lsmod | grep 'ip6table_mangle')" ] && ip6t_m="eval #$ip6t_m"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
-FAKE_IP="198.18.0.0/15"
+FAKE_IP="198.18.0.0/16"
 FAKE_IP_6="2001:2::/48"
 
 USE_GEOVIEW=0
@@ -1567,6 +1567,7 @@ stop() {
 		rm -rf $TMP_PATH2/singbox*
 		rm -rf $TMP_PATH2/dnsmasq*
 		rm -rf $TMP_PATH2/geo_output
+		rm -rf $TMP_PATH2/user_rules
 	}
 	flush_include
 }
