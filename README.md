@@ -29,13 +29,13 @@ Run manually from GitHub:
 The selected repository, branch and source commit are saved in `source.txt` in
 the build log artifact.
 
-PassWall and its dependency packages are vendored unchanged from the official
+PassWall and its dependency packages are vendored from the official
 [Openwrt-Passwall](https://github.com/Openwrt-Passwall) GitHub repositories.
 The source commits are recorded in `local_packages/passwall-upstream.json`
-and copied to the build logs. Passwall and its Chinese translation are disabled
-in the firmware configuration. Xray remains available for manual use;
+and copied to the build logs. The build uses Xray, including its Hysteria2 support;
 standalone Sing-box, Hysteria and V2Ray plugin binaries are disabled to reduce image size.
-Other component choices use upstream defaults. There are no custom SOCKS forwarding,
+The GeoIP package is locally changed to the pinned China/private-only asset;
+other component choices use upstream defaults. There are no custom SOCKS forwarding,
 DNS bypass controls, automatic node migrations or rule-update overrides.
 
 The build configuration is stored in `configs/xg040gmd.config`. Edit this file
@@ -54,14 +54,16 @@ prefetch, two concurrent upstreams and 120-second connection reuse are enabled.
 Domestic upstreams use AliDNS/Tencent DoH; foreign upstreams use Cloudflare/Google
 DoH. Configure working proxy nodes before relying on blocked foreign upstreams.
 
-Dnsmasq forwards requests directly to MosDNS. MosDNS's LuCI DNS-forwarding
+Passwall uses its upstream ChinaDNS-NG integration for domain/IP policy sets;
+both direct and remote DNS point to MosDNS, with UDP for local DNS transport.
+Only Passwall performs client DNS interception. MosDNS's LuCI DNS-forwarding
 option is enabled; dnsmasq caching is disabled by that upstream option, leaving
-DNS caching to MosDNS. Passwall is not required or configured by initialization.
-No proxy credentials, nodes, or WAN credentials are added.
+DNS caching to MosDNS. No proxy credentials, nodes, or WAN credentials are added.
 
 `files/etc/uci-defaults/99-zzz-xg040gmd-dns` installs these defaults only on a
 fresh install. Retained-config upgrades and repeated initialization preserve
-existing DNS choices. GeoIP and GeoSite remain bundled for MosDNS startup.
+existing DNS choices. This profile keeps the tested Passwall classification
+path; it does not implement a new MosDNS-only firewall-set integration.
 
 Simplified Chinese is enabled with `CONFIG_LUCI_LANG_zh_Hans=y`. LuCI translation
 packages are hidden Kconfig options driven by this language setting, so selecting
@@ -164,3 +166,12 @@ Includes pinned ImmortalWrt Full Cone module and userspace patches, disabled by
 default. After flashing, use **Network > Firewall > General Settings > Full Cone NAT**
 to enable IPv4 Full Cone for masquerading zones. This improves UDP peer
 connectivity, not bandwidth. See [patch sources and verification](patches/fullcone/README.md).
+
+## Geo data size and updates
+
+GeoIP uses the pinned `geoip-only-cn-private.dat` asset (about 134 KiB) instead
+of the full country database. GeoSite remains complete for domestic/foreign
+domain classification. Other country GeoIP tags are unavailable in this profile.
+`99-zzzz-xg040gmd-geodata` enables MosDNS updates daily at 02:00 once, including
+retained-config upgrades, and changes Passwall's GeoIP URL to the same slim asset.
+Both services share `/usr/share/v2ray/`. Later user changes are preserved.

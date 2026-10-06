@@ -1,5 +1,5 @@
 #!/bin/sh
-# MosDNS DNS settings, applied only on fresh installations.
+# Tested MosDNS + Passwall DNS settings, applied only on fresh installations.
 set -eu
 
 case "$(cat /tmp/sysinfo/board_name)" in
@@ -11,6 +11,7 @@ if [ -f /sysupgrade.tgz ] || [ -f /tmp/sysupgrade.tar ] ||
     exit 0
 fi
 uci -q get mosdns.config >/dev/null || exit 1
+uci -q get passwall.@global[0] >/dev/null || exit 1
 
 uci set mosdns.config.enabled=1
 uci set mosdns.config.listen_port=6053
@@ -35,6 +36,19 @@ uci -q delete mosdns.config.remote_dns || true
 uci add_list mosdns.config.remote_dns='https://1.1.1.1/dns-query'
 uci add_list mosdns.config.remote_dns='https://8.8.8.8/dns-query'
 
+uci set passwall.@global[0].dns_shunt=chinadns-ng
+uci set passwall.@global[0].direct_dns_mode=udp
+uci set passwall.@global[0].direct_dns='127.0.0.1:6053'
+uci set passwall.@global[0].remote_dns='127.0.0.1:6053'
+uci set passwall.@global[0].dns_mode=xray
+uci set passwall.@global[0].v2ray_dns_mode=udp
+uci set passwall.@global[0].filter_proxy_ipv6=0
+uci set passwall.@global[0].dns_redirect=1
+uci set passwall.@global[0].chinadns_ng_default_tag=none_noip
+uci set passwall.@global[0].use_default_dns=direct
+uci -q delete passwall.@global[0].group_domestic || true
+uci -q delete passwall.@global[0].smartdns_dns_mode || true
+
 uci -q delete dhcp.@dnsmasq[0].server || true
 uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#6053'
 uci set dhcp.@dnsmasq[0].noresolv=1
@@ -42,5 +56,6 @@ uci set dhcp.@dnsmasq[0].noresolv=1
 uci set dhcp.@dnsmasq[0].cachesize=0
 uci set mosdns.config.xg040gmd_dns_defaults=1
 uci commit mosdns
+uci commit passwall
 uci commit dhcp
 exit 0
