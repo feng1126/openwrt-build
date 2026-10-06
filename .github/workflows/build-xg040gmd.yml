@@ -179,6 +179,10 @@ jobs:
             echo "::error::Standalone Sing-box and Hysteria must remain disabled in the Xray profile"
             exit 1
           fi
+          if grep -Eq '^CONFIG_PACKAGE_(v2ray-plugin|luci-app-passwall_INCLUDE_V2ray_Plugin)=(y|m)$' .config; then
+            echo "::error::Unused V2Ray plugin must remain disabled in the Xray profile"
+            exit 1
+          fi
           echo "===== target profile check ====="
           grep -E 'CONFIG_TARGET_airoha|CONFIG_TARGET.*xg|CONFIG_TARGET.*nokia|CONFIG_TARGET.*040' .config || true
           echo "===== luci/package check ====="

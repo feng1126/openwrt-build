@@ -33,7 +33,7 @@ PassWall and its dependency packages are vendored unchanged from the official
 [Openwrt-Passwall](https://github.com/Openwrt-Passwall) GitHub repositories.
 The source commits are recorded in `local_packages/passwall-upstream.json`
 and copied to the build logs. The build uses Xray, including its Hysteria2 support;
-standalone Sing-box and Hysteria binaries are disabled to reduce image size.
+standalone Sing-box, Hysteria and V2Ray plugin binaries are disabled to reduce image size.
 Other component choices use upstream defaults. There are no custom SOCKS forwarding,
 DNS bypass controls, automatic node migrations or rule-update overrides.
 
