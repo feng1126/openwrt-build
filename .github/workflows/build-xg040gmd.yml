@@ -161,7 +161,7 @@ jobs:
             CONFIG_PACKAGE_dns2socks \
             CONFIG_PACKAGE_v2ray-geoip \
             CONFIG_PACKAGE_v2ray-geosite \
-            CONFIG_PACKAGE_hysteria; do
+            CONFIG_PACKAGE_xray-core; do
             if ! grep -qx "${symbol}=y" .config; then
               echo "::error::Required configuration missing: ${symbol}=y"
               exit 1
@@ -173,6 +173,10 @@ jobs:
           fi
           if grep -Eq '^CONFIG_PACKAGE_(smartdns|luci-app-smartdns|luci-i18n-smartdns-zh-cn)=(y|m)$' .config; then
             echo "::error::SmartDNS must be disabled when building the MosDNS profile"
+            exit 1
+          fi
+          if grep -Eq '^CONFIG_PACKAGE_(sing-box|hysteria|luci-app-passwall_INCLUDE_SingBox|luci-app-passwall_INCLUDE_Hysteria)=(y|m)$' .config; then
+            echo "::error::Standalone Sing-box and Hysteria must remain disabled in the Xray profile"
             exit 1
           fi
           echo "===== target profile check ====="
