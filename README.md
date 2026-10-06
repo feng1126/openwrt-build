@@ -169,9 +169,11 @@ connectivity, not bandwidth. See [patch sources and verification](patches/fullco
 
 ## Geo data size and updates
 
-GeoIP uses the pinned `geoip-only-cn-private.dat` asset (about 134 KiB) instead
-of the full country database. GeoSite remains complete for domestic/foreign
-domain classification. Other country GeoIP tags are unavailable in this profile.
-`99-zzzz-xg040gmd-geodata` enables MosDNS updates daily at 02:00 once, including
-retained-config upgrades, and changes Passwall's GeoIP URL to the same slim asset.
-Both services share `/usr/share/v2ray/`. Later user changes are preserved.
+Firmware embeds the pinned `geoip-only-cn-private.dat` asset (about 134 KiB)
+to reduce image size. GeoSite remains complete. At runtime, MosDNS updates daily
+at 02:00 using the full `geoip.dat`; Passwall's update URL also uses the full asset.
+Both services share `/usr/share/v2ray/`. Other country GeoIP tags become available
+after the full data is downloaded and loaded by the service.
+`99-zzzz-xg040gmd-geodata` applies this policy once, including retained-config
+upgrades and migration from the previous slim-update policy. Later user changes
+are preserved.

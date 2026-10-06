@@ -6,15 +6,15 @@ case "$(cat /tmp/sysinfo/board_name)" in
     *) exit 0 ;;
 esac
 uci -q get mosdns.config >/dev/null || exit 1
-[ "$(uci -q get mosdns.config.xg040gmd_geo_defaults || true)" != 1 ] || exit 0
-uci set mosdns.config.geoip_type=geoip-only-cn-private
+[ "$(uci -q get mosdns.config.xg040gmd_geo_defaults || true)" != 2 ] || exit 0
+uci set mosdns.config.geoip_type=geoip
 uci set mosdns.config.geo_auto_update=1
 uci set mosdns.config.geo_update_week_time='*'
 uci set mosdns.config.geo_update_day_time=2
 if uci -q get passwall.@global_rules[0] >/dev/null; then
-    uci set passwall.@global_rules[0].geoip_url='https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip-only-cn-private.dat'
+    uci set passwall.@global_rules[0].geoip_url='https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat'
     uci commit passwall
 fi
-uci set mosdns.config.xg040gmd_geo_defaults=1
+uci set mosdns.config.xg040gmd_geo_defaults=2
 uci commit mosdns
 exit 0
