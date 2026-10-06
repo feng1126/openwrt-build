@@ -176,3 +176,7 @@ asset, and Passwall's GeoIP update URL uses the full asset. Both services share
 `/usr/share/v2ray/`. Other country GeoIP tags require downloading and loading the
 full database. `99-zzzz-xg040gmd-geodata` only undoes the previous custom update
 policy when its migration marker exists; fresh installations use upstream defaults.
+
+The workflow fixes the legacy SmartDNS LuCI array-to-boolean status bug after
+feeds installation. SmartDNS remains disabled in the MosDNS firmware profile;
+the source fix also applies if SmartDNS is selected in a future profile.

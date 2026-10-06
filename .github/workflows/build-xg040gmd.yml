@@ -98,6 +98,11 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Fix SmartDNS LuCI service status
+        run: |
+          set -o pipefail
+          python3 scripts/fix-smartdns-status.py openwrt 2>&1 | tee build-logs/smartdns-status-fix.log
+
       - name: Install Full Cone NAT support
         shell: bash
         run: |
