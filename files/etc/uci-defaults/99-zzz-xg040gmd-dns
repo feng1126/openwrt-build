@@ -1,0 +1,61 @@
+#!/bin/sh
+# Tested MosDNS + Passwall DNS settings, applied only on fresh installations.
+set -eu
+
+case "$(cat /tmp/sysinfo/board_name)" in
+    nokia,xg-040g-md|nokia,xg-040g-md-ubi) ;;
+    *) exit 0 ;;
+esac
+if [ -f /sysupgrade.tgz ] || [ -f /tmp/sysupgrade.tar ] ||
+   [ "$(uci -q get mosdns.config.xg040gmd_dns_defaults || true)" = 1 ]; then
+    exit 0
+fi
+uci -q get mosdns.config >/dev/null || exit 1
+uci -q get passwall.@global[0] >/dev/null || exit 1
+
+uci set mosdns.config.enabled=1
+uci set mosdns.config.listen_port=6053
+uci set mosdns.config.redirect=1
+uci set mosdns.config.local_dns_redirect=0
+uci set mosdns.config.prefer_ipv4=1
+uci set mosdns.config.prefer_ipv4_cn=1
+uci set mosdns.config.cache=1
+uci set mosdns.config.cache_size=4096
+uci set mosdns.config.lazy_cache_ttl=3600
+uci set mosdns.config.prefetch=1
+uci set mosdns.config.concurrent=2
+uci set mosdns.config.idle_timeout=120
+uci set mosdns.config.bootstrap_dns=223.5.5.5
+uci set mosdns.config.custom_local_dns=1
+uci set mosdns.config.reject_type65=1
+uci set mosdns.config.stats_capacity=500
+uci -q delete mosdns.config.local_dns || true
+uci add_list mosdns.config.local_dns='https://223.5.5.5/dns-query'
+uci add_list mosdns.config.local_dns='https://119.29.29.29/dns-query'
+uci -q delete mosdns.config.remote_dns || true
+uci add_list mosdns.config.remote_dns='https://1.1.1.1/dns-query'
+uci add_list mosdns.config.remote_dns='https://8.8.8.8/dns-query'
+
+uci set passwall.@global[0].dns_shunt=chinadns-ng
+uci set passwall.@global[0].direct_dns_mode=udp
+uci set passwall.@global[0].direct_dns='127.0.0.1:6053'
+uci set passwall.@global[0].remote_dns='127.0.0.1:6053'
+uci set passwall.@global[0].dns_mode=xray
+uci set passwall.@global[0].v2ray_dns_mode=udp
+uci set passwall.@global[0].filter_proxy_ipv6=0
+uci set passwall.@global[0].dns_redirect=1
+uci set passwall.@global[0].chinadns_ng_default_tag=none_noip
+uci set passwall.@global[0].use_default_dns=direct
+uci -q delete passwall.@global[0].group_domestic || true
+uci -q delete passwall.@global[0].smartdns_dns_mode || true
+
+uci -q delete dhcp.@dnsmasq[0].server || true
+uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#6053'
+uci set dhcp.@dnsmasq[0].noresolv=1
+# The LuCI redirect option also sets this to zero; cache lives in MosDNS.
+uci set dhcp.@dnsmasq[0].cachesize=0
+uci set mosdns.config.xg040gmd_dns_defaults=1
+uci commit mosdns
+uci commit passwall
+uci commit dhcp
+exit 0

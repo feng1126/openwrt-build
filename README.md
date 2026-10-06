@@ -42,6 +42,27 @@ which can lose line breaks. After `make defconfig`, the workflow verifies the
 AN7581 XG-040G-MD UBI profile and essential LuCI packages before downloading or
 compiling sources.
 
+## MosDNS defaults
+
+MosDNS 5.3.4-r14, LuCI 1.7.14 and its Chinese translation replace SmartDNS.
+The unchanged package sources are pinned in `local_packages/mosdns-upstream.json`.
+Fresh installations enable MosDNS on port 6053 with IPv4 preference for domestic
+and foreign domains, while retaining IPv6-only DNS answers. Its 4096-entry cache,
+prefetch, two concurrent upstreams and 120-second connection reuse are enabled.
+Domestic upstreams use AliDNS/Tencent DoH; foreign upstreams use Cloudflare/Google
+DoH. Configure working proxy nodes before relying on blocked foreign upstreams.
+
+Passwall uses its upstream ChinaDNS-NG integration for domain/IP policy sets;
+both direct and remote DNS point to MosDNS, with UDP for local DNS transport.
+Only Passwall performs client DNS interception. MosDNS's LuCI DNS-forwarding
+option is enabled; dnsmasq caching is disabled by that upstream option, leaving
+DNS caching to MosDNS. No proxy credentials, nodes, or WAN credentials are added.
+
+`files/etc/uci-defaults/99-zzz-xg040gmd-dns` installs these defaults only on a
+fresh install. Retained-config upgrades and repeated initialization preserve
+existing DNS choices. This profile keeps the tested Passwall classification
+path; it does not implement a new MosDNS-only firewall-set integration.
+
 Simplified Chinese is enabled with `CONFIG_LUCI_LANG_zh_Hans=y`. LuCI translation
 packages are hidden Kconfig options driven by this language setting, so selecting
 individual `luci-i18n-*-zh-cn` packages alone is insufficient. The workflow checks
