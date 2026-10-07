@@ -3,7 +3,8 @@
 set -eu
 
 case "$(cat /tmp/sysinfo/board_name)" in
-	nokia,xg-040g-md|nokia,xg-040g-md-ubi) ;;
+	nokia,xg-040g-md-ubi) uplink=pon0; lan_ports="lan1 lan2 lan3 lan4" ;;
+	nokia,xg-040g-md) uplink=lan1; lan_ports="lan2 lan3 lan4" ;;
 	*) exit 0 ;;
 esac
 
@@ -14,7 +15,7 @@ if [ -f /sysupgrade.tgz ] || [ -f /tmp/sysupgrade.tar ] ||
 	exit 0
 fi
 
-# Keep the copper uplink out of the LAN bridge.
+# PON uses all copper ports as LAN; the stock layout keeps its copper uplink.
 bridge=
 for section in $(uci show network | sed -n 's/^\(network\.[^.]*\)=device$/\1/p'); do
 	if [ "$(uci -q get "$section.name" || true)" = br-lan ]; then
@@ -29,7 +30,7 @@ if [ -z "$bridge" ]; then
 fi
 uci set "$bridge.type=bridge"
 uci -q delete "$bridge.ports" || true
-for port in lan2 lan3 lan4; do
+for port in $lan_ports; do
 	uci add_list "$bridge.ports=$port"
 done
 
@@ -42,15 +43,15 @@ uci set network.lan.netmask=255.255.255.0
 uci -q delete network.lan.gateway || true
 uci -q delete network.lan.ifname || true
 
-# Remove both naming variants to avoid duplicate clients on lan1.
+# Remove both naming variants to avoid duplicate WAN clients.
 for interface in wan wan6 WAN WAN6; do
 	uci -q delete "network.$interface" || true
 done
 uci set network.WAN=interface
-uci set network.WAN.device=lan1
+uci set "network.WAN.device=$uplink"
 uci set network.WAN.proto=dhcp
 uci set network.WAN6=interface
-uci set network.WAN6.device=lan1
+uci set "network.WAN6.device=$uplink"
 uci set network.WAN6.proto=dhcpv6
 uci set network.WAN6.reqaddress=try
 # This device needs an upstream IPv6 address, not a delegated LAN prefix.
