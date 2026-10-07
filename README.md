@@ -180,3 +180,14 @@ policy when its migration marker exists; fresh installations use upstream defaul
 The workflow fixes the legacy SmartDNS LuCI array-to-boolean status bug after
 feeds installation. SmartDNS remains disabled in the MosDNS firmware profile;
 the source fix also applies if SmartDNS is selected in a future profile.
+
+
+## Nokia XG-040G-MD PON 移植
+
+本分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成 PonWrt 的 PON 内核接口、PCS 和 Nokia UBI 板级适配，以及两个 PON feed 的软件包源码。源码提交和文件校验值见 `patches/pon/sources.json`。工作流固定到已验证的官方 OpenWrt 提交；更新底版需要重新对比补丁，不直接追随 main。
+
+编译配置包含 `kmod-airoha-xpon`、`kmod-airoha-en7572`、`airoha-ponctl`、`airoha-pond`、诊断工具、PON 和 IPTV LuCI 页面。`airoha-paged-bosa` 保留在源码中，目标 Nokia 使用 EN7572，无需选中。所有 PON 包保持同级目录，确保驱动共享头文件和符号版本依赖正确。
+
+适用目标为 `nokia_xg-040g-md-ubi`、Linux 6.18。现有用户配置会覆盖首次启动的网络默认值；升级后应在 LuCI 检查 WAN 设备是否为 `pon0`，并按线路需要设置 VLAN 和上网协议。PON 模式默认留空，需要在“网络 → PON”配置。使用设备自身的 BOSA 校准和 RI 数据；迁移不会自动生成认证信息，也不会刷写设备。
+
+上游协议状态：XG-PON 和 10G/1G EPON 已测试；XGS-PON 和 10G/10G EPON 尚未测试；GPON 和 1G EPON 尚未实现。固件编译通过不代表已经完成光线路注册和业务实测。

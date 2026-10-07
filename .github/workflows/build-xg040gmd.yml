@@ -51,8 +51,20 @@ jobs:
             echo "Branch: $source_branch"
             git -C openwrt log -1 --format='%H %s'
           } | tee build-logs/source.txt
+          # Pin the validated official OpenWrt base; PON APIs are version-sensitive.
+          pon_base=$(python3 -c 'import json; print(json.load(open("patches/pon/sources.json"))["upstream"]["openwrt"]["commit"])')
+          git -C openwrt merge-base --is-ancestor "$pon_base" HEAD
+          git -C openwrt checkout --detach "$pon_base"
+          git -C openwrt log -1 --format='%H %s' >> build-logs/source.txt
           cd openwrt
           git log --oneline -5
+
+      - name: Install Airoha PON kernel and userspace port
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/apply-pon.py openwrt 2>&1 | tee build-logs/pon-setup.log
+          cp patches/pon/sources.json build-logs/pon-sources.json
 
       - name: Copy local custom packages
         run: |
@@ -129,6 +141,14 @@ jobs:
             CONFIG_PACKAGE_kmod-nft-fullcone \
             CONFIG_PACKAGE_firewall4 \
             CONFIG_PACKAGE_nftables-json \
+            CONFIG_PACKAGE_kmod-airoha-xpon \
+            CONFIG_PACKAGE_kmod-airoha-pon-frontend \
+            CONFIG_PACKAGE_kmod-airoha-en7572 \
+            CONFIG_PACKAGE_airoha-ponctl \
+            CONFIG_PACKAGE_airoha-pond \
+            CONFIG_PACKAGE_airoha-pon-debug \
+            CONFIG_PACKAGE_luci-app-pon \
+            CONFIG_PACKAGE_luci-app-iptv \
             CONFIG_PACKAGE_conntrack \
             CONFIG_PACKAGE_default-settings \
             CONFIG_PACKAGE_autosamba \
@@ -280,7 +300,7 @@ jobs:
           retention-days: 14
 
       - name: Publish firmware release
-        if: success()
+        if: success() && github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
