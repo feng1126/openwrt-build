@@ -38,7 +38,8 @@
     "target/linux/airoha/patches-6.18/925-net-airoha-add-PON-PPE-offload-metadata.patch": null,
     "target/linux/airoha/patches-6.18/310-10-net-airoha-add-phylink-support.patch": "7e76db90685d472190c81be7bda81391c895e0c118cb1740d109c6fb7cb7c389",
     "target/linux/airoha/patches-6.18/920-16-net-airoha-Account-for-L2-overhead-in-PPE-MTU-configuration.patch": "b76e7954cb82912dd0a1dbba748c14bea77eb93b546dcb91ed3483c09ccab3a5",
-    "target/linux/airoha/base-files/etc/board.d/03_pon_data": null
+    "target/linux/airoha/base-files/etc/board.d/03_pon_data": null,
+    "target/linux/airoha/patches-6.18/606-net-pcs-airoha-fix-an7583-port-count.patch": "ed23601dfa1b82a9a6af24e1dc606738b3b2db7dabbfe0f115d8cf4090176511"
   },
   "sha256": {
     "patches/pon/001-xg040gmd-pon-board.patch": "760af7c84b46c971b6c570897f78647d08d449ddb66d152e683eb8e38f48adc2",
@@ -161,6 +162,7 @@
     "local_packages/pon/airoha-pon-debug/files/airoha-pon-debug.init": "16a850e81f945152b9a0568c8682396e88917dc31b0a45f78ffadb868fa94345",
     "local_packages/pon/airoha-pon-debug/files/pon-debug": "54cecae1508bc34f8beea08e3375c0ba5fc7c9188272cbfa41df135e8df048b4",
     "local_packages/pon/airoha-pon-debug/files/airoha-pon-debug.config": "46e0c1ddc0b0ffd79e1301cab86331350166929e950d34d54e09f375e06d33f4",
-    "local_packages/pon/airoha-pon-debug/files/airoha-pon-debug": "50fb7c05ace40c7ec9196e42c22c6e2f9b939aa0b3f92c0c5fe35596b9ab4968"
+    "local_packages/pon/airoha-pon-debug/files/airoha-pon-debug": "50fb7c05ace40c7ec9196e42c22c6e2f9b939aa0b3f92c0c5fe35596b9ab4968",
+    "patches/pon/overlay/target/linux/airoha/patches-6.18/606-net-pcs-airoha-fix-an7583-port-count.patch": "39e788eae21d780cc2e58bee01c7dca74d8c9c01ee25cf03bf4dbd257967fe28"
   }
 }
