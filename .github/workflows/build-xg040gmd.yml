@@ -240,6 +240,10 @@ jobs:
             echo "::error::Unused V2Ray plugin must remain disabled in the Xray profile"
             exit 1
           fi
+          if grep -Eq '^CONFIG_PACKAGE_(shadowsocks-rust-.*|luci-app-passwall_INCLUDE_Shadowsocks_Rust_(Client|Server))=(y|m)$' .config; then
+            echo "::error::Shadowsocks Rust packages must remain disabled; use Xray instead"
+            exit 1
+          fi
           echo "===== target profile check ====="
           grep -E 'CONFIG_TARGET_airoha|CONFIG_TARGET.*xg|CONFIG_TARGET.*nokia|CONFIG_TARGET.*040' .config || true
           echo "===== luci/package check ====="
