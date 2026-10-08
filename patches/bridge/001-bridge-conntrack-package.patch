@@ -1,0 +1,21 @@
+--- a/package/kernel/linux/modules/netfilter.mk
++++ b/package/kernel/linux/modules/netfilter.mk
+@@ -1256,6 +1256,18 @@
+ $(eval $(call KernelPackage,nfnetlink-cttimeout))
+ 
+ 
++define KernelPackage/nf-conntrack-bridge
++  SUBMENU:=$(NF_MENU)
++  TITLE:=IPv4/IPv6 bridge connection tracking support
++  DEPENDS:=+kmod-nf-conntrack +kmod-bridge
++  FILES:=$(LINUX_DIR)/net/bridge/netfilter/nf_conntrack_bridge.ko
++  KCONFIG:=CONFIG_NF_CONNTRACK_BRIDGE
++  AUTOLOAD:=$(call AutoProbe,nf_conntrack_bridge)
++endef
++
++$(eval $(call KernelPackage,nf-conntrack-bridge))
++
++
+ define KernelPackage/nf-conntrack-netlink
+   TITLE:=Connection tracking netlink interface
+   FILES:=$(LINUX_DIR)/net/netfilter/nf_conntrack_netlink.ko
