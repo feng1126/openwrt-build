@@ -19,7 +19,7 @@ function runIdentity(args) {
 	return fs.exec('/usr/libexec/pon-board-identity', args).then(function(result) {
 		if (result.code != 0)
 			throw new Error(result.stderr || result.stdout || _('Board identity operation failed.'));
-		return result.stdout.trim();
+		return String(result.stdout || "").trim();
 	});
 }
 
