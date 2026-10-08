@@ -373,7 +373,7 @@ jobs:
           retention-days: 14
 
       - name: Publish firmware release
-        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pon-xg040gmd')
+        if: success() && github.ref == 'refs/heads/pon-bridge-test'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -382,7 +382,7 @@ jobs:
           ARTIFACT_BRANCH: ${{ steps.source.outputs.artifact_branch }}
         run: |
           set -euo pipefail
-          tag="openwrt-${ARTIFACT_BRANCH}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          tag="openwrt-pon-bridge-test-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mapfile -d '' files < <(find artifact/targets -type f ! -path '*/packages/*' -print0 | sort -z)
           if ! printf '%s\n' "${files[@]}" | grep -Eq '\.(bin|itb|img|ubi|img\.gz)$'; then
             echo "::error::No firmware image found; refusing to publish release"
@@ -404,6 +404,6 @@ jobs:
           gh api "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA"
           gh release create "$tag" "${files[@]}" \
             --verify-tag \
-            --title "XG-040G-MD OpenWrt ${BUILD_BRANCH} · ${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}" \
-            --notes-file release-notes.md --draft
-          gh release edit "$tag" --draft=false --latest
+            --title "XG-040G-MD PON bridge experimental · ${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}" \
+            --notes-file release-notes.md --prerelease --draft
+          gh release edit "$tag" --draft=false --prerelease --latest=false
