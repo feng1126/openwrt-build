@@ -194,3 +194,5 @@ main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成
 适用目标为 `nokia_xg-040g-md-ubi`、Linux 6.18。现有用户配置会覆盖首次启动的网络默认值；升级后应在 LuCI 检查 WAN 设备是否为 `pon0`，并按线路需要设置 VLAN 和上网协议。PON 模式默认留空，需要在“网络 → PON”配置。使用设备自身的 BOSA 校准和 RI 数据；迁移不会自动生成认证信息，也不会刷写设备。
 
 上游协议状态：XG-PON 和 10G/1G EPON 已测试；XGS-PON 和 10G/10G EPON 尚未测试；GPON 和 1G EPON 尚未实现。固件编译通过不代表已经完成光线路注册和业务实测。
+
+PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；未启用实验桥接卸载，因此移除原生 L2B 布局补丁。官方底版自带的相关补丁继续保留。PON 数据/控制通道、PCS/光模块 GPIO、PPE GEM/T-CONT 元数据、共享 QDMA/DMA、VLAN MTU、NPU mailbox 超时和外部 SerDes NBQ 修复保留，分别服务于光接入、数据通道正确性和驱动稳定性。
