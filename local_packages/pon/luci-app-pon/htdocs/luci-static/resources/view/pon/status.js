@@ -53,7 +53,15 @@ function displayFrontendMetric(frontend, field, unit) {
 		return _('Read failed');
 	if (!Object.prototype.hasOwnProperty.call(frontend, field))
 		return _('Not supported');
-	return Number(frontend[field]).toFixed(2) + ' ' + unit;
+	var value = frontend[field];
+	if (value == null || value === '' || !Number.isFinite(Number(value)))
+		return _('Unknown');
+	/* An uncalibrated transmitter at the DDMI floor is not a measured power. */
+	if (field === 'tx_power_dbm' && Number(value) <= -40 &&
+	    (frontend.calibration === 'missing' || frontend.calibration === 'invalid'))
+		return _('Unknown') + ' (' + _('Calibration state') + ': ' +
+			(frontend.calibration === 'missing' ? _('Missing') : _('Invalid format')) + ')';
+	return Number(value).toFixed(2) + ' ' + unit;
 }
 
 function displayLifecycle(value) {
