@@ -364,7 +364,7 @@ jobs:
           retention-days: 14
 
       - name: Publish firmware release
-        if: success() && github.ref == 'refs/heads/main'
+        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pon-xg040gmd')
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
