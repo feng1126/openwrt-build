@@ -13,6 +13,11 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 360
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/openwrt/.ccache
+      CCACHE_MAXSIZE: 3G
+      # Rebuilt compilers have new mtimes; compare their contents across runs.
+      CCACHE_COMPILERCHECK: content
     permissions:
       contents: write
 
@@ -45,14 +50,52 @@ jobs:
           echo "branch=$source_branch" >> "$GITHUB_OUTPUT"
           echo "artifact_branch=${source_branch//\//-}" >> "$GITHUB_OUTPUT"
           mkdir -p build-logs
-          git clone --branch "$source_branch" https://github.com/openwrt/openwrt.git openwrt
+          git clone --filter=blob:none --single-branch --no-checkout --branch "$source_branch" https://github.com/openwrt/openwrt.git openwrt
           {
             echo "Repository: https://github.com/openwrt/openwrt"
             echo "Branch: $source_branch"
             git -C openwrt log -1 --format='%H %s'
           } | tee build-logs/source.txt
+          # Pin the validated official OpenWrt base; PON APIs are version-sensitive.
+          pon_base=$(python3 -c 'import json; print(json.load(open("patches/pon/sources.json"))["upstream"]["openwrt"]["commit"])')
+          git -C openwrt merge-base --is-ancestor "$pon_base" HEAD
+          echo "pon_base=$pon_base" >> "$GITHUB_OUTPUT"
+          git -C openwrt checkout --detach "$pon_base"
+          git -C openwrt log -1 --format='%H %s' >> build-logs/source.txt
           cd openwrt
           git log --oneline -5
+
+      - name: Restore downloaded sources
+        id: cache_dl
+        uses: actions/cache/restore@v4
+        with:
+          path: openwrt/dl
+          key: openwrt-dl-v1-${{ runner.os }}-${{ hashFiles('configs/xg040gmd.config') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            openwrt-dl-v1-${{ runner.os }}-${{ hashFiles('configs/xg040gmd.config') }}-
+            openwrt-dl-v1-${{ runner.os }}-
+
+      - name: Restore compiler cache
+        id: cache_ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: openwrt/.ccache
+          key: openwrt-ccache-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu24-an7581-${{ steps.source.outputs.pon_base }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            openwrt-ccache-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu24-an7581-${{ steps.source.outputs.pon_base }}-
+
+      - name: Configure compiler cache
+        run: |
+          mkdir -p "$CCACHE_DIR"
+          ccache --set-config=max_size=3G
+          ccache --zero-stats
+
+      - name: Install Airoha PON kernel and userspace port
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/apply-pon.py openwrt 2>&1 | tee build-logs/pon-setup.log
+          cp patches/pon/sources.json build-logs/pon-sources.json
 
       - name: Copy local custom packages
         run: |
@@ -121,6 +164,7 @@ jobs:
           set -o pipefail
           make defconfig 2>&1 | tee ../build-logs/defconfig.log
           for symbol in \
+            CONFIG_CCACHE \
             CONFIG_TARGET_airoha \
             CONFIG_TARGET_airoha_an7581 \
             CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md-ubi \
@@ -129,6 +173,14 @@ jobs:
             CONFIG_PACKAGE_kmod-nft-fullcone \
             CONFIG_PACKAGE_firewall4 \
             CONFIG_PACKAGE_nftables-json \
+            CONFIG_PACKAGE_kmod-airoha-xpon \
+            CONFIG_PACKAGE_kmod-airoha-pon-frontend \
+            CONFIG_PACKAGE_kmod-airoha-en7572 \
+            CONFIG_PACKAGE_airoha-ponctl \
+            CONFIG_PACKAGE_airoha-pond \
+            CONFIG_PACKAGE_airoha-pon-debug \
+            CONFIG_PACKAGE_luci-app-pon \
+            CONFIG_PACKAGE_luci-app-iptv \
             CONFIG_PACKAGE_conntrack \
             CONFIG_PACKAGE_default-settings \
             CONFIG_PACKAGE_autosamba \
@@ -188,6 +240,10 @@ jobs:
             echo "::error::Unused V2Ray plugin must remain disabled in the Xray profile"
             exit 1
           fi
+          if grep -Eq '^CONFIG_PACKAGE_(shadowsocks-rust-.*|luci-app-passwall_INCLUDE_Shadowsocks_Rust_(Client|Server))=(y|m)$' .config; then
+            echo "::error::Shadowsocks Rust packages must remain disabled; use Xray instead"
+            exit 1
+          fi
           echo "===== target profile check ====="
           grep -E 'CONFIG_TARGET_airoha|CONFIG_TARGET.*xg|CONFIG_TARGET.*nokia|CONFIG_TARGET.*040' .config || true
           echo "===== luci/package check ====="
@@ -201,6 +257,9 @@ jobs:
           grep -qx 'CONFIG_PACKAGE_odhcp6c=y' openwrt/.config
           bash -n local_packages/natmapt/files/ddns/Cloudflare-Origin
           mkdir -p openwrt/files
+          # NPU firmware must come from the official linux-firmware package.
+          test ! -e files/lib/firmware/airoha/en7581_npu_data.bin
+          test ! -e files/lib/firmware/airoha/en7581_npu_rv32.bin
           cp -a files/. openwrt/files/
           sh -n files/etc/uci-defaults/99-zz-xg040gmd-wan
           sh -n files/etc/uci-defaults/99-zzz-xg040gmd-dns
@@ -210,11 +269,20 @@ jobs:
             openwrt/files/etc/uci-defaults/99-zz-xg040gmd-wan
 
       - name: Download sources
+        id: download
         shell: bash
         run: |
           cd openwrt
           set -o pipefail
           make download -j"$(nproc)" V=s 2>&1 | tee ../build-logs/download.log
+
+      - name: Save downloaded sources
+        if: steps.download.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: openwrt/dl
+          key: ${{ steps.cache_dl.outputs.cache-primary-key }}
 
       - name: Verify Full Cone package patches
         shell: bash
@@ -229,6 +297,7 @@ jobs:
           grep -R -q 'nft_try_fullcone' build_dir/target-*/firewall4-*/root/usr/share/ucode/fw4.uc
 
       - name: Build firmware
+        id: compile
         shell: bash
         run: |
           cd openwrt
@@ -245,6 +314,24 @@ jobs:
           fi
           echo "Parallel build failed; retrying with one job for clearer diagnostics."
           make -j1 V=s 2>&1 | tee ../build-logs/build-retry.log
+
+      - name: Report compiler cache statistics
+        if: ${{ !cancelled() && steps.compile.outcome != 'skipped' && steps.compile.outcome != '' }}
+        continue-on-error: true
+        run: |
+          cache_tool=openwrt/staging_dir/host/bin/ccache
+          if [ ! -x "$cache_tool" ]; then cache_tool=ccache; fi
+          "$cache_tool" --cleanup
+          "$cache_tool" --show-stats | tee build-logs/ccache-stats.txt
+          du -sh openwrt/dl openwrt/.ccache
+
+      - name: Save compiler cache even after a build failure
+        if: ${{ !cancelled() && steps.compile.outcome != 'skipped' && steps.compile.outcome != '' && steps.cache_ccache.outcome == 'success' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: openwrt/.ccache
+          key: ${{ steps.cache_ccache.outputs.cache-primary-key }}
 
       - name: Upload build logs
         if: always()
@@ -280,7 +367,7 @@ jobs:
           retention-days: 14
 
       - name: Publish firmware release
-        if: success()
+        if: success() && github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -299,6 +386,7 @@ jobs:
           {
             echo "XG-040G-MD OpenWrt firmware"
             echo
+            echo "PON support integrated on main; NPU firmware from official OpenWrt linux-firmware."
             echo "Source branch: ${BUILD_BRANCH}"
             echo "Build: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo
