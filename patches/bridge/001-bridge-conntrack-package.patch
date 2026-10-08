@@ -7,7 +7,7 @@
 +define KernelPackage/nf-conntrack-bridge
 +  SUBMENU:=$(NF_MENU)
 +  TITLE:=IPv4/IPv6 bridge connection tracking support
-+  DEPENDS:=+kmod-nf-conntrack +kmod-bridge
++  DEPENDS:=+kmod-nf-conntrack
 +  FILES:=$(LINUX_DIR)/net/bridge/netfilter/nf_conntrack_bridge.ko
 +  KCONFIG:=CONFIG_NF_CONNTRACK_BRIDGE
 +  AUTOLOAD:=$(call AutoProbe,nf_conntrack_bridge)

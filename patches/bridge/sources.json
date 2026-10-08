@@ -17,5 +17,5 @@
     "target/linux/generic/pending-6.18/702-04-netfilter-flowtable-push-egress-vlan-in-bridge-fast-path.patch": "c76352a946d257d392a3acd272e775adfb0bc29b5df680ef582f7c049e310310",
     "target/linux/generic/pending-6.18/702-05-netfilter-nft_flow_offload-bridged-connections-crossing-twice.patch": "327b052550b4c3625ad9c184c817649319f9671be5ab60bc3d23f0fc03d7b5a3"
   },
-  "package_patch_sha256": "47209f863db6f00421fd4fe82852377a7c078eca42de1f05b2da53505fc412af"
+  "package_patch_sha256": "e7587b2ee78f017b206e1092c38c0edb1c800135524ce4a2135d54c685295d0d"
 }
