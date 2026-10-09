@@ -217,7 +217,7 @@ the source fix also applies if SmartDNS is selected in a future profile.
 
 ## ZeroTier 局域网访问
 
-首次启动配置建立 `lan → zerotier` 转发并启用 IPv4 地址伪装，按 `zt+` 匹配 ZeroTier 接口。IP、网段和路由由实际 LAN 配置及 ZeroTier 网络下发，不固定虚拟 IP 或网关。局域网客户端需以本路由器为网关，ZeroTier 节点仍需在控制台授权。未配置 ZeroTier 到 LAN 的主动转发。
+ZeroTier 页面提供“允许局域网访问 ZeroTier”开关，控制 `lan → zerotier` 转发及 IPv4 地址伪装，按 `zt+` 匹配 ZeroTier 接口。新安装默认关闭，保留已有开关状态；保存并应用后生效。IP、网段和路由由实际 LAN 配置及 ZeroTier 网络下发，不固定虚拟 IP 或网关。局域网客户端需以本路由器为网关，ZeroTier 节点仍需在控制台授权。未配置 ZeroTier 到 LAN 的主动转发。
 
 当 ZeroTier 使用 `/etc/` 下的自定义配置目录时，默认脚本会创建该目录并将其加入 `/etc/sysupgrade.conf`，保留已有身份文件。ZeroTier 的启用状态保持用户原设置。
 

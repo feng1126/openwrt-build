@@ -40,11 +40,15 @@ function renderStatus(isRunning) {
 }
 
 return view.extend({
+	load: function() {
+		return uci.load('firewall');
+	},
 	render: function() {
 		let m, s, o;
 
 		m = new form.Map('zerotier', _('ZeroTier'),
 			_('ZeroTier is an open source, cross-platform and easy to use virtual LAN.'));
+		m.chain('firewall');
 
 		s = m.section(form.TypedSection);
 		s.anonymous = true;
@@ -64,6 +68,28 @@ return view.extend({
 		s = m.section(form.NamedSection, 'global', 'zerotier', _('Global configuration'));
 
 		o = s.option(form.Flag, 'enabled', _('Enable'));
+
+		o = s.option(form.Flag, '_lan_forward', '允许局域网访问 ZeroTier',
+			'启用 LAN 到 ZeroTier 的转发及 IPv4 地址伪装。自动使用实际接口地址和路由，无需填写 IP 或网关；不开放 ZeroTier 主动访问 LAN。保存并应用后生效。');
+		o.rmempty = false;
+		o.cfgvalue = function() {
+			return uci.get('firewall', 'lan_to_zt', 'enabled') !== '0' &&
+				uci.get('firewall', 'lan_to_zt', 'src') === 'lan' &&
+				uci.get('firewall', 'lan_to_zt', 'dest') === 'zerotier' ? '1' : '0';
+		};
+		o.write = function(section_id, value) {
+			if (!uci.get('firewall', 'zt_lan_access'))
+				uci.add('firewall', 'zone', 'zt_lan_access');
+			Object.entries({ name: 'zerotier', device: 'zt+', input: 'ACCEPT',
+				output: 'ACCEPT', forward: 'REJECT', masq: '1', mtu_fix: '1' }).forEach(function(entry) {
+				uci.set('firewall', 'zt_lan_access', entry[0], entry[1]);
+			});
+			if (!uci.get('firewall', 'lan_to_zt'))
+				uci.add('firewall', 'forwarding', 'lan_to_zt');
+			uci.set('firewall', 'lan_to_zt', 'src', 'lan');
+			uci.set('firewall', 'lan_to_zt', 'dest', 'zerotier');
+			uci.set('firewall', 'lan_to_zt', 'enabled', value);
+		};
 
 		o = s.option(form.Value, 'port', _('Listen port'));
 		o.datatype = 'port';

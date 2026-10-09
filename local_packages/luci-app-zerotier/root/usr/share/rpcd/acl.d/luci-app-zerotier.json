@@ -8,10 +8,10 @@
 			"ubus": {
 				"service": [ "list" ]
 			},
-			"uci": [ "zerotier" ]
+			"uci": [ "zerotier", "firewall" ]
 		},
 		"write": {
-			"uci": [ "zerotier" ]
+			"uci": [ "zerotier", "firewall" ]
 		}
 	}
 }

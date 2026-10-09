@@ -16,6 +16,14 @@ if [ -n "$config_path" ]; then
     esac
 fi
 
+forward_enabled="$(uci -q get firewall.lan_to_zt.enabled || true)"
+if [ -z "$forward_enabled" ]; then
+    if [ "$(uci -q get firewall.lan_to_zt.dest || true)" = zerotier ]; then
+        forward_enabled=1
+    else
+        forward_enabled=0
+    fi
+fi
 uci -q batch <<'EOF'
 set firewall.zt_lan_access=zone
 set firewall.zt_lan_access.name='zerotier'
@@ -30,4 +38,6 @@ set firewall.lan_to_zt.src='lan'
 set firewall.lan_to_zt.dest='zerotier'
 commit firewall
 EOF
+uci set firewall.lan_to_zt.enabled="$forward_enabled"
+uci commit firewall
 exit 0
