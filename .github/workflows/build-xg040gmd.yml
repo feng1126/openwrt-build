@@ -267,6 +267,7 @@ jobs:
           cp -a files/. openwrt/files/
           sh -n files/etc/uci-defaults/99-zz-xg040gmd-wan
           sh -n files/etc/uci-defaults/99-zzz-xg040gmd-dns
+          sh -n files/etc/uci-defaults/99-zzz-xg040gmd-haproxy
           install -Dm755 files/etc/uci-defaults/99-zz-xg040gmd-wan \
             openwrt/files/etc/uci-defaults/99-zz-xg040gmd-wan
           cmp files/etc/uci-defaults/99-zz-xg040gmd-wan \

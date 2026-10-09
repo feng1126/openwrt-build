@@ -1,0 +1,15 @@
+#!/bin/sh
+# Passwall starts its own HAProxy instance only when balancing is enabled.
+set -eu
+
+case "$(cat /tmp/sysinfo/board_name)" in
+    nokia,xg-040g-md|nokia,xg-040g-md-ubi) ;;
+    *) exit 0 ;;
+esac
+
+if [ -x /etc/init.d/haproxy ]; then
+    /etc/init.d/haproxy disable
+    # Stop only the standalone procd service, not Passwall's private instance.
+    /etc/init.d/haproxy stop
+fi
+exit 0

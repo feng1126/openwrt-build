@@ -38,6 +38,12 @@ The GeoIP package is locally changed to the pinned China/private-only asset;
 other component choices use upstream defaults. There are no custom SOCKS forwarding,
 DNS bypass controls, automatic node migrations or rule-update overrides.
 
+The standalone HAProxy service is disabled on XG-040G-MD, including upgrades
+with retained settings. The package remains installed: Passwall starts its own
+instance when its HAProxy load balancing option is enabled and applied, and
+cleans it up on stop/restart. Xray's built-in balancing is independent of this
+option and does not require HAProxy.
+
 Zram swap is included with matching kernel modules and enabled at boot. On
 XG-040G-MD, missing settings default to 128 MiB, `lzo-rle` compression and
 priority 100, including upgrades retaining an existing system configuration.
