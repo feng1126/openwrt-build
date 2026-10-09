@@ -13,7 +13,7 @@ jobs:
   publish:
     runs-on: ubuntu-24.04
     steps:
-    - name: Validate successful build
+    - name: Validate compiled firmware
       id: build
       env:
         GH_TOKEN: ${{ github.token }}
@@ -21,14 +21,17 @@ jobs:
         RUN_ID: ${{ inputs.run_id }}
       shell: bash
       run: "set -euo pipefail\n[[ \"$RUN_ID\" =~ ^[0-9]+$ ]]\ngh api \"repos/$GH_REPO/actions/runs/$RUN_ID\"\
-        \ > run.json\njq -e '.conclusion == \"success\" and .path == \".github/workflows/build-xg040gmd.yml\"\
-        ' run.json\nartifact=$(gh api \"repos/$GH_REPO/actions/runs/$RUN_ID/artifacts\"\
-        \ --jq '[.artifacts[] | select(.expired == false and (.name | startswith(\"\
-        xg040gmd-openwrt-\")))] | if length == 1 then .[0].name else error(\"Expected\
-        \ exactly one firmware artifact\") end')\n{\n echo \"artifact=$artifact\"\n\
-        \ echo \"branch=${artifact#xg040gmd-openwrt-}\"\n echo \"sha=$(jq -r .head_sha\
-        \ run.json)\"\n echo \"attempt=$(jq -r .run_attempt run.json)\"\n} >> \"$GITHUB_OUTPUT\"\
-        \n"
+        \ > run.json\njq -e '.status == \"completed\" and .path == \".github/workflows/build-xg040gmd.yml\"\
+        ' run.json\ngh api \"repos/$GH_REPO/actions/runs/$RUN_ID/attempts/$(jq -r\
+        \ .run_attempt run.json)/jobs\" > jobs.json\njq -e '[.jobs[].steps[]] | any(.name\
+        \ == \"Build firmware\" and .conclusion == \"success\") and all(.conclusion\
+        \ != \"failure\" or .name == \"Publish firmware release\")' jobs.json\nartifact=$(gh\
+        \ api \"repos/$GH_REPO/actions/runs/$RUN_ID/artifacts\" --jq '[.artifacts[]\
+        \ | select(.expired == false and (.name | startswith(\"xg040gmd-openwrt-\"\
+        )))] | if length == 1 then .[0].name else error(\"Expected exactly one firmware\
+        \ artifact\") end')\n{\n echo \"artifact=$artifact\"\n echo \"branch=${artifact#xg040gmd-openwrt-}\"\
+        \n echo \"sha=$(jq -r .head_sha run.json)\"\n echo \"attempt=$(jq -r .run_attempt\
+        \ run.json)\"\n} >> \"$GITHUB_OUTPUT\"\n"
     - name: Download and extract firmware
       uses: actions/download-artifact@v4
       with:

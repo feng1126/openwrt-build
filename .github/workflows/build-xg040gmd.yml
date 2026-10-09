@@ -25,6 +25,19 @@ jobs:
       - name: Checkout build repo
         uses: actions/checkout@v4
 
+      - name: Reserve firmware release tag
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_BRANCH: ${{ inputs.base_branch }}
+        run: |
+          set -euo pipefail
+          branch="${SOURCE_BRANCH:-main}"
+          tag="openwrt-${branch//\//-}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gh api "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA"
+
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
@@ -394,7 +407,7 @@ jobs:
             echo
             cat build-logs/source.txt
           } > release-notes.md
-          gh api "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA"
+          test "$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq .object.sha)" = "$GITHUB_SHA"
           gh release create "$tag" "${files[@]}" \
             --verify-tag \
             --title "XG-040G-MD OpenWrt ${BUILD_BRANCH} · ${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}" \
