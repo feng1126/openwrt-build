@@ -1,40 +1,71 @@
-# XG-040G-MD OpenWrt Snapshot Build
+# Nokia XG-040G-MD OpenWrt 固件编译
 
-This repository builds OpenWrt for Nokia/Bell XG-040G-MD through GitHub Actions.
+通过 GitHub Actions 为 Nokia/Bell XG-040G-MD 编译 OpenWrt，基于官方 OpenWrt，集成 PON 适配、LuCI 中文界面、Passwall、MosDNS、NATMap 和内存优化配置。
 
-It clones official `openwrt/openwrt`, then builds the Airoha AN7581
-`nokia_xg-040g-md-ubi` target from the selected branch. This UBI profile is
-the intended profile for TC U-Boot style installs. The default source branch is
-`main`, which is the OpenWrt snapshot development branch.
+| 项目 | 当前配置 |
+| --- | --- |
+| 编译仓库分支 | `main` |
+| 平台 / 设备 | Airoha AN7581 / `nokia_xg-040g-md-ubi` |
+| OpenWrt 底版 | 固定到 `60461330279f2ab0828ae704e4d7d9c0e73cd507`，详见 [来源记录](patches/pon/sources.json) |
+| 自动构建 | 每天北京时间 **03:17**，UTC `19:17` |
+| 自动发布 | 构建成功后发布 GitHub Release，标记为 Latest |
+| 压缩交换 | **128 MiB zram**，`lzo-rle`，优先级 `100` |
+| HAProxy | 系统服务默认关闭，由 Passwall 负载均衡按需启动 |
 
-Important:
+## 下载与构建
 
-- This repository is only an automated build wrapper; firmware sources are
-  pulled from the official OpenWrt repository.
-- The default build is a snapshot build, not an official stable release.
-- For TC U-Boot installs, use the `nokia_xg-040g-md-ubi` `sysupgrade.itb`
-  image, not the non-UBI `sysupgrade.bin`.
-- XG-PON behavior still needs to be validated on real hardware.
+- [下载最新发布固件](https://github.com/feng1126/openwrt-build/releases/latest)
+- [查看构建进度与日志](https://github.com/feng1126/openwrt-build/actions/workflows/build-xg040gmd.yml)
+- [查看编译配置](configs/xg040gmd.config)
 
-The `main` branch builds automatically every day at 03:17 China time
-(19:17 UTC). Successful builds publish a GitHub Release with firmware,
-checksums and build configuration, and mark it as the latest release.
-Failed builds retain diagnostic artifacts and do not publish a release.
-GitHub Actions may delay scheduled runs. The validated OpenWrt base remains
-pinned; daily builds do not automatically change that source revision.
+每日任务从本仓库 `main` 分支执行，成功后发布固件、校验文件和构建配置；失败时保留诊断产物，不发布 Release。GitHub 定时任务可能延迟启动。
 
-Run manually from GitHub:
+每日构建不会自动升级固定的 OpenWrt 底版，也不会自动更新所有本地软件包。PON 接口与内核版本有关，升级底版需要重新核对补丁；部分依赖和 Argon 主题仍按工作流从上游获取。
 
-1. Open Actions.
-2. Select `Build XG-040G-MD OpenWrt`.
-3. Click `Run workflow`.
-4. Keep `base_branch` as `main`, or enter an OpenWrt branch that supports the
-   XG-040G-MD UBI profile. Start the workflow.
-5. Download the firmware artifact after the job finishes, for example
-   `xg040gmd-openwrt-main`.
+手动构建：
 
-The selected repository, branch and source commit are saved in `source.txt` in
-the build log artifact.
+1. 打开 **Actions → Build XG-040G-MD OpenWrt → Run workflow**。
+2. 仓库分支选择 `main`，`base_branch` 通常保持 `main`。
+3. 等待构建完成，从 Releases 或 `xg040gmd-openwrt-main` 产物下载固件。
+
+`base_branch` 选择上游源码分支，但工作流最终检出已验证的固定提交；所选分支必须包含该提交，并非直接编译任意分支的最新版。
+
+每次构建上传独立的 `xg040gmd-build-logs-<run>-<attempt>` 诊断产物，保留 14 天。记录包含源码提交、配置、下载与编译日志。并行编译失败后会单线程重试，输出保存为 `build-retry.log`。
+
+## 固件与设备说明
+
+- 这是自行构建的 OpenWrt Snapshot 固件，不是官方稳定版。
+- TC U-Boot 安装使用 UBI 目标的 `sysupgrade.itb`，不要混用非 UBI 目标的 `sysupgrade.bin`。
+- 编译成功不代表所有光接入模式均已在本设备验证；具体 PON 状态见文末。
+- 构建不会自动刷写设备，也不内置代理节点、WAN 密码、DDNS 或 Cloudflare 凭据。
+
+## 内存优化与 HAProxy
+
+固件包含同次编译生成的 `kmod-zram` 和官方 `zram-swap` 启动脚本，开机启用压缩交换。默认配置如下：
+
+```text
+system.@system[0].zram_size_mb=128
+system.@system[0].zram_comp_algo=lzo-rle
+system.@system[0].zram_priority=100
+```
+
+[初始化脚本](files/etc/uci-defaults/99-zzz-xg040gmd-zram)在首次启动或保留配置升级时补齐缺失项，保留已有自定义值。zram 按实际压缩数据占用物理内存，128 MiB 是逻辑容量，并非启动时立即占用 128 MiB RAM。
+
+查看运行状态：
+
+```sh
+free
+cat /proc/swaps
+cat /sys/block/zram0/mm_stat
+```
+
+[HAProxy 初始化脚本](files/etc/uci-defaults/99-zzz-xg040gmd-haproxy)停止并禁用系统独立服务，包括保留配置升级，避免默认示例配置常驻。软件包仍保留；在 Passwall 开启 **HAProxy 负载均衡**并保存应用后，由 Passwall 启动专用实例，停止或重启时清理。Xray 自带的节点均衡不依赖 HAProxy。
+
+这些设置用于减少无用常驻占用、缓冲内存峰值；没有额外修改 Passwall 的网络事件、规则更新或重启逻辑。
+
+## 编译配置与主要组件
+
+修改 [configs/xg040gmd.config](configs/xg040gmd.config)选择软件包。工作流在 `make defconfig` 后检查设备目标、主要组件、zram 和压缩算法，避免配置静默失效。下载缓存和编译器缓存用于加快后续构建。
 
 PassWall and its dependency packages are vendored from the official
 [Openwrt-Passwall](https://github.com/Openwrt-Passwall) GitHub repositories.
@@ -45,25 +76,7 @@ The GeoIP package is locally changed to the pinned China/private-only asset;
 other component choices use upstream defaults. There are no custom SOCKS forwarding,
 DNS bypass controls, automatic node migrations or rule-update overrides.
 
-The standalone HAProxy service is disabled on XG-040G-MD, including upgrades
-with retained settings. The package remains installed: Passwall starts its own
-instance when its HAProxy load balancing option is enabled and applied, and
-cleans it up on stop/restart. Xray's built-in balancing is independent of this
-option and does not require HAProxy.
-
-Zram swap is included with matching kernel modules and enabled at boot. On
-XG-040G-MD, missing settings default to 128 MiB, `lzo-rle` compression and
-priority 100, including upgrades retaining an existing system configuration.
-Existing zram settings are preserved. The workflow checks the package and
-compressor selections after `make defconfig`.
-
-The build configuration is stored in `configs/xg040gmd.config`. Edit this file
-to change packages; configuration is not passed through the workflow input form,
-which can lose line breaks. After `make defconfig`, the workflow verifies the
-AN7581 XG-040G-MD UBI profile and essential LuCI packages before downloading or
-compiling sources.
-
-## MosDNS defaults
+## MosDNS 与 DNS 默认配置
 
 MosDNS 5.3.4-r14, LuCI 1.7.14 and its Chinese translation replace SmartDNS.
 The unchanged package sources are pinned in `local_packages/mosdns-upstream.json`.
@@ -93,10 +106,7 @@ The Argon theme is fetched from the `master` branch of
 [`jerrykuku/luci-theme-argon`](https://github.com/jerrykuku/luci-theme-argon)
 at build time. Its commit is recorded in `argon-source.txt` in the build logs.
 
-Each run uploads a separate `xg040gmd-build-logs-<run>-<attempt>` artifact even
-when a step fails. It includes the seed and generated configuration, configuration
-and download logs, and compilation logs for steps that ran. Failed parallel builds
-are retried with one job, with the retry output saved as `build-retry.log`.
+## NPU 与硬件加速
 
 The firmware includes `luci-app-airoha-npu` and its Chinese translation. Open
 **Network > Airoha NPU** to enable software and hardware flow offloading, then
@@ -129,12 +139,13 @@ the firewall service.
 
 **Status > SoC Status** displays CPU and NPU frequencies using read-only kernel
 interfaces, refreshing every five seconds. Missing values display as `N/A`.
-CPU frequency controls, overclocking RPC methods, and direct register access have
-been removed. The build configuration disables `/dev/mem` and BusyBox `devmem`.
+CPU frequency controls and overclocking RPC methods have been removed from
+the application. The current build configuration enables kernel `/dev/mem`
+and BusyBox `devmem`; the read-only status page does not use them.
 The only settings provided by this app are the manual firewall flow-offloading
 switches under **Network > Airoha NPU**; opening either page does not enable them.
 
-## XG-040G-MD network defaults
+## 网络默认配置
 
 Every build installs `files/etc/uci-defaults/99-zz-xg040gmd-wan` into the
 firmware. OpenWrt runs it once after installation (including a sysupgrade),
@@ -189,7 +200,7 @@ default. After flashing, use **Network > Firewall > General Settings > Full Cone
 to enable IPv4 Full Cone for masquerading zones. This improves UDP peer
 connectivity, not bandwidth. See [patch sources and verification](patches/fullcone/README.md).
 
-## Geo data size and updates
+## Geo 数据体积与更新
 
 Firmware embeds the pinned `geoip-only-cn-private.dat` asset (about 134 KiB)
 to reduce image size. GeoSite remains complete. Update settings use upstream
