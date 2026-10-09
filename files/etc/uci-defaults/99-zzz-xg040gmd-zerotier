@@ -1,0 +1,33 @@
+#!/bin/sh
+# Match ZeroTier devices dynamically; addresses and routes remain managed by ZT.
+set -eu
+
+[ -x /etc/init.d/zerotier ] || exit 0
+
+config_path="$(uci -q get zerotier.global.config_path || true)"
+if [ -n "$config_path" ]; then
+    case "$config_path" in
+        /etc/*)
+            mkdir -p "$config_path"
+            chmod 700 "$config_path"
+            touch /etc/sysupgrade.conf
+            grep -qxF "$config_path/" /etc/sysupgrade.conf || printf '%s/\n' "$config_path" >> /etc/sysupgrade.conf
+            ;;
+    esac
+fi
+
+uci -q batch <<'EOF'
+set firewall.zt_lan_access=zone
+set firewall.zt_lan_access.name='zerotier'
+set firewall.zt_lan_access.device='zt+'
+set firewall.zt_lan_access.input='ACCEPT'
+set firewall.zt_lan_access.output='ACCEPT'
+set firewall.zt_lan_access.forward='REJECT'
+set firewall.zt_lan_access.masq='1'
+set firewall.zt_lan_access.mtu_fix='1'
+set firewall.lan_to_zt=forwarding
+set firewall.lan_to_zt.src='lan'
+set firewall.lan_to_zt.dest='zerotier'
+commit firewall
+EOF
+exit 0

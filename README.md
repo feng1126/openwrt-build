@@ -215,6 +215,12 @@ feeds installation. SmartDNS remains disabled in the MosDNS firmware profile;
 the source fix also applies if SmartDNS is selected in a future profile.
 
 
+## ZeroTier 局域网访问
+
+首次启动配置建立 `lan → zerotier` 转发并启用 IPv4 地址伪装，按 `zt+` 匹配 ZeroTier 接口。IP、网段和路由由实际 LAN 配置及 ZeroTier 网络下发，不固定虚拟 IP 或网关。局域网客户端需以本路由器为网关，ZeroTier 节点仍需在控制台授权。未配置 ZeroTier 到 LAN 的主动转发。
+
+当 ZeroTier 使用 `/etc/` 下的自定义配置目录时，默认脚本会创建该目录并将其加入 `/etc/sysupgrade.conf`，保留已有身份文件。ZeroTier 的启用状态保持用户原设置。
+
 ## Nokia XG-040G-MD PON 移植
 
 main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成 PonWrt 的 PON 内核接口、PCS 和 Nokia UBI 板级适配，以及两个 PON feed 的软件包源码。源码提交和文件校验值见 `patches/pon/sources.json`。工作流跟随官方 OpenWrt 所选分支的最新提交，默认 main；`sources.json` 中的 OpenWrt 提交仅记录 PON 移植参考底版。内核版本、覆盖文件和补丁检查继续保留，上游变化不兼容时需要重新适配。
