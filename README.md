@@ -16,6 +16,13 @@ Important:
   image, not the non-UBI `sysupgrade.bin`.
 - XG-PON behavior still needs to be validated on real hardware.
 
+The `main` branch builds automatically every day at 03:17 China time
+(19:17 UTC). Successful builds publish a GitHub Release with firmware,
+checksums and build configuration, and mark it as the latest release.
+Failed builds retain diagnostic artifacts and do not publish a release.
+GitHub Actions may delay scheduled runs. The validated OpenWrt base remains
+pinned; daily builds do not automatically change that source revision.
+
 Run manually from GitHub:
 
 1. Open Actions.
