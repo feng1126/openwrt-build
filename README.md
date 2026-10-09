@@ -7,7 +7,7 @@
 | 编译仓库分支 | `main` |
 | 平台 / 设备 | Airoha AN7581 / `nokia_xg-040g-md-ubi` |
 | OpenWrt 底版 | 每次获取所选上游分支的最新提交，默认 `openwrt/openwrt` 的 `main` |
-| 自动构建 | 每天北京时间 **03:17**，UTC `19:17` |
+| 自动构建 | 已迁移至 [immortal-build](https://github.com/feng1126/immortal-build)，本仓库保留手动构建 |
 | 自动发布 | 构建成功后发布 GitHub Release，标记为 Latest |
 | 压缩交换 | **128 MiB zram**，`lzo-rle`，优先级 `100` |
 | HAProxy | 系统服务默认关闭，由 Passwall 负载均衡按需启动 |
@@ -18,9 +18,9 @@
 - [查看构建进度与日志](https://github.com/feng1126/openwrt-build/actions/workflows/build-xg040gmd.yml)
 - [查看编译配置](configs/xg040gmd.config)
 
-每日任务从本仓库 `main` 分支执行，成功后发布固件、校验文件和构建配置；失败时保留诊断产物，不发布 Release。GitHub 定时任务可能延迟启动。
+每日北京时间 03:17 的自动构建与发布已迁移至 [immortal-build](https://github.com/feng1126/immortal-build)，使用最新 ImmortalWrt `master`。本仓库保留官方 OpenWrt 手动构建，成功后仍可发布固件。
 
-每日构建使用获取源码时最新的官方 OpenWrt `main`，不再固定底版提交。实际提交记录在 `source.txt` 和发布说明中。本地软件包与 PON 移植来源仍保留各自版本记录，不会因此自动更新。PON 集成仍检查 Linux 6.18、覆盖文件校验值和补丁兼容性；遇到不兼容的上游变更会停止构建，不会自动回退旧底版或发布失败产物。
+本仓库手动构建使用获取源码时最新的官方 OpenWrt `main`，不再固定底版提交。实际提交记录在 `source.txt` 和发布说明中。本地软件包与 PON 移植来源仍保留各自版本记录，不会因此自动更新。PON 集成仍检查 Linux 6.18、覆盖文件校验值和补丁兼容性；遇到不兼容的上游变更会停止构建，不会自动回退旧底版或发布失败产物。
 
 手动构建：
 
