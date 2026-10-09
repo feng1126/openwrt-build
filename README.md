@@ -38,6 +38,12 @@ The GeoIP package is locally changed to the pinned China/private-only asset;
 other component choices use upstream defaults. There are no custom SOCKS forwarding,
 DNS bypass controls, automatic node migrations or rule-update overrides.
 
+Zram swap is included with matching kernel modules and enabled at boot. On
+XG-040G-MD, missing settings default to 128 MiB, `lzo-rle` compression and
+priority 100, including upgrades retaining an existing system configuration.
+Existing zram settings are preserved. The workflow checks the package and
+compressor selections after `make defconfig`.
+
 The build configuration is stored in `configs/xg040gmd.config`. Edit this file
 to change packages; configuration is not passed through the workflow input form,
 which can lose line breaks. After `make defconfig`, the workflow verifies the

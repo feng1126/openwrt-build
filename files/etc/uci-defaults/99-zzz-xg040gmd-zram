@@ -1,0 +1,28 @@
+#!/bin/sh
+# Apply tested swap defaults, including upgrades without existing zram settings.
+set -eu
+
+case "$(cat /tmp/sysinfo/board_name)" in
+    nokia,xg-040g-md|nokia,xg-040g-md-ubi) ;;
+    *) exit 0 ;;
+esac
+
+uci -q get system.@system[0] >/dev/null || exit 1
+changed=0
+for setting in zram_size_mb=128 zram_comp_algo=lzo-rle zram_priority=100; do
+    key=${setting%%=*}
+    if ! uci -q get "system.@system[0].$key" >/dev/null; then
+        uci set "system.@system[0].$setting"
+        changed=1
+    fi
+done
+
+if [ "$changed" = 1 ]; then
+    uci commit system
+fi
+/etc/init.d/zram enable
+# zram may have already started with the package's automatic size at boot.
+if [ "$changed" = 1 ]; then
+    /etc/init.d/zram restart
+fi
+exit 0

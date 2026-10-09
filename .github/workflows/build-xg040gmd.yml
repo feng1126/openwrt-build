@@ -185,6 +185,10 @@ jobs:
             CONFIG_PACKAGE_default-settings \
             CONFIG_PACKAGE_autosamba \
             CONFIG_PACKAGE_automount \
+            CONFIG_PACKAGE_zram-swap \
+            CONFIG_PACKAGE_kmod-zram \
+            CONFIG_KERNEL_ZRAM_BACKEND_LZO \
+            CONFIG_KERNEL_ZRAM_DEF_COMP_LZORLE \
             CONFIG_PACKAGE_luci-app-airoha-npu \
             CONFIG_KERNEL_DEVMEM \
             CONFIG_KERNEL_DEBUG_FS \
