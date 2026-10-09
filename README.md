@@ -6,7 +6,7 @@
 | --- | --- |
 | 编译仓库分支 | `main` |
 | 平台 / 设备 | Airoha AN7581 / `nokia_xg-040g-md-ubi` |
-| OpenWrt 底版 | 固定到 `60461330279f2ab0828ae704e4d7d9c0e73cd507`，详见 [来源记录](patches/pon/sources.json) |
+| OpenWrt 底版 | 每次获取所选上游分支的最新提交，默认 `openwrt/openwrt` 的 `main` |
 | 自动构建 | 每天北京时间 **03:17**，UTC `19:17` |
 | 自动发布 | 构建成功后发布 GitHub Release，标记为 Latest |
 | 压缩交换 | **128 MiB zram**，`lzo-rle`，优先级 `100` |
@@ -20,7 +20,7 @@
 
 每日任务从本仓库 `main` 分支执行，成功后发布固件、校验文件和构建配置；失败时保留诊断产物，不发布 Release。GitHub 定时任务可能延迟启动。
 
-每日构建不会自动升级固定的 OpenWrt 底版，也不会自动更新所有本地软件包。PON 接口与内核版本有关，升级底版需要重新核对补丁；部分依赖和 Argon 主题仍按工作流从上游获取。
+每日构建使用获取源码时最新的官方 OpenWrt `main`，不再固定底版提交。实际提交记录在 `source.txt` 和发布说明中。本地软件包与 PON 移植来源仍保留各自版本记录，不会因此自动更新。PON 集成仍检查 Linux 6.18、覆盖文件校验值和补丁兼容性；遇到不兼容的上游变更会停止构建，不会自动回退旧底版或发布失败产物。
 
 手动构建：
 
@@ -28,7 +28,7 @@
 2. 仓库分支选择 `main`，`base_branch` 通常保持 `main`。
 3. 等待构建完成，从 Releases 或 `xg040gmd-openwrt-main` 产物下载固件。
 
-`base_branch` 选择上游源码分支，但工作流最终检出已验证的固定提交；所选分支必须包含该提交，并非直接编译任意分支的最新版。
+`base_branch` 选择上游源码分支，编译该分支在获取源码时的最新提交。其他分支也必须通过现有 PON 内核与补丁兼容性检查。
 
 每次构建上传独立的 `xg040gmd-build-logs-<run>-<attempt>` 诊断产物，保留 14 天。记录包含源码提交、配置、下载与编译日志。并行编译失败后会单线程重试，输出保存为 `build-retry.log`。
 
@@ -217,7 +217,7 @@ the source fix also applies if SmartDNS is selected in a future profile.
 
 ## Nokia XG-040G-MD PON 移植
 
-main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成 PonWrt 的 PON 内核接口、PCS 和 Nokia UBI 板级适配，以及两个 PON feed 的软件包源码。源码提交和文件校验值见 `patches/pon/sources.json`。工作流固定到已验证的官方 OpenWrt 提交；更新底版需要重新对比补丁，不直接追随 main。
+main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成 PonWrt 的 PON 内核接口、PCS 和 Nokia UBI 板级适配，以及两个 PON feed 的软件包源码。源码提交和文件校验值见 `patches/pon/sources.json`。工作流跟随官方 OpenWrt 所选分支的最新提交，默认 main；`sources.json` 中的 OpenWrt 提交仅记录 PON 移植参考底版。内核版本、覆盖文件和补丁检查继续保留，上游变化不兼容时需要重新适配。
 
 编译配置包含 `kmod-airoha-xpon`、`kmod-airoha-en7572`、`airoha-ponctl`、`airoha-pond`、诊断工具、PON 和 IPTV LuCI 页面。`airoha-paged-bosa` 保留在源码中，目标 Nokia 使用 EN7572，无需选中。所有 PON 包保持同级目录，确保驱动共享头文件和符号版本依赖正确。
 

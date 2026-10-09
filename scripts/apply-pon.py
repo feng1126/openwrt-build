@@ -40,7 +40,10 @@ def main():
         shutil.copy2(BUNDLE / 'overlay' / name, target)
     shutil.copytree(REPO / 'local_packages/pon', packages)
     for name, upstream in manifest['upstream'].items():
-        print(f'{name}: {upstream["url"]} @ {upstream["commit"]}')
+        label = 'openwrt PON reference base' if name == 'openwrt' else name
+        print(f'{label}: {upstream["url"]} @ {upstream["commit"]}')
+    actual = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+    print(f'Actual OpenWrt build source: {actual}')
     print('PON port installed for Nokia XG-040G-MD UBI. Configure the line in LuCI.')
 
 

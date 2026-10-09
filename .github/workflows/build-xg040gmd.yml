@@ -53,18 +53,15 @@ jobs:
           echo "branch=$source_branch" >> "$GITHUB_OUTPUT"
           echo "artifact_branch=${source_branch//\//-}" >> "$GITHUB_OUTPUT"
           mkdir -p build-logs
-          git clone --filter=blob:none --single-branch --no-checkout --branch "$source_branch" https://github.com/openwrt/openwrt.git openwrt
+          git clone --depth 1 --single-branch --branch "$source_branch" https://github.com/openwrt/openwrt.git openwrt
+          source_commit=$(git -C openwrt rev-parse HEAD)
+          echo "source_commit=$source_commit" >> "$GITHUB_OUTPUT"
           {
             echo "Repository: https://github.com/openwrt/openwrt"
             echo "Branch: $source_branch"
             git -C openwrt log -1 --format='%H %s'
           } | tee build-logs/source.txt
-          # Pin the validated official OpenWrt base; PON APIs are version-sensitive.
-          pon_base=$(python3 -c 'import json; print(json.load(open("patches/pon/sources.json"))["upstream"]["openwrt"]["commit"])')
-          git -C openwrt merge-base --is-ancestor "$pon_base" HEAD
-          echo "pon_base=$pon_base" >> "$GITHUB_OUTPUT"
-          git -C openwrt checkout --detach "$pon_base"
-          git -C openwrt log -1 --format='%H %s' >> build-logs/source.txt
+          # apply-pon.py checks kernel and overlay compatibility before integration.
           cd openwrt
           git log --oneline -5
 
@@ -83,9 +80,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: openwrt/.ccache
-          key: openwrt-ccache-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu24-an7581-${{ steps.source.outputs.pon_base }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: openwrt-ccache-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu24-an7581-${{ steps.source.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            openwrt-ccache-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu24-an7581-${{ steps.source.outputs.pon_base }}-
+            openwrt-ccache-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu24-an7581-${{ steps.source.outputs.source_commit }}-
 
       - name: Configure compiler cache
         run: |
