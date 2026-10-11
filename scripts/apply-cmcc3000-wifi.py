@@ -14,6 +14,12 @@ original=(base/'target/linux/mediatek/Makefile').read_text()
 if 'KERNEL_PATCHVER:=6.6' not in original:raise RuntimeError('Expected OpenWrt 24.10 / Linux 6.6')
 tree('target/linux/mediatek')
 (base/'target/linux/mediatek/Makefile').write_text(original)
+# The donor declares tagged structures without objects; static is invalid there.
+p=base/'target/linux/mediatek/patches-6.6/999-2903-mtk-enhance.patch'
+s=p.read_text()
+if s.count('+static struct hnat_desc {') != 3:
+ raise RuntimeError('Unexpected donor HNAT descriptor patch')
+p.write_text(s.replace('+static struct hnat_desc {', '+struct hnat_desc {'))
 for part in ['backport-6.6','pending-6.6','hack-6.6','files','files-6.6']:
  rel='target/linux/generic/'+part
  if (src/rel).is_dir():tree(rel)
@@ -28,6 +34,9 @@ p=base/'package/kernel/linux/modules/netdevices.mk';s=p.read_text()
 v=(src/'package/kernel/linux/modules/netdevices.mk').read_text()
 block=v[v.index('define KernelPackage/mediatek_hnat\n'):]
 block=block[:block.index('$(eval $(call KernelPackage,mediatek_hnat))')+len('$(eval $(call KernelPackage,mediatek_hnat))')]
+# HNAT's kernel Kconfig depends on IP_NF_NAT. Official nftables-only defaults
+# do not enable it, unlike the donor's full router configuration.
+block=block.replace('+kmod-nf-conntrack', '+kmod-nf-conntrack +kmod-ipt-nat')
 if 'define KernelPackage/mediatek_hnat\n' not in s:p.write_text(s+'\n'+block+'\n')
 # The image must use the vendor stack, not the default mt76 driver.
 p=base/'target/linux/mediatek/image/filogic.mk';s=p.read_text()

@@ -1,6 +1,9 @@
 name: Build CMCC RAX3000M OpenWrt MTK WiFi
 on:
   workflow_dispatch:
+defaults:
+  run:
+    shell: bash
 permissions:
   contents: write
 jobs:
@@ -71,4 +74,5 @@ jobs:
           path: |
             build-logs/
             openwrt/.config
+            openwrt/build_dir/target-*/linux-mediatek_filogic/linux-6.6.*/.config
           include-hidden-files: true
