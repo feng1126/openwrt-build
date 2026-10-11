@@ -23,13 +23,14 @@ jobs:
           git -C openwrt log -1 --format='%H %s' > build-logs/openwrt-source.txt
           python3 scripts/apply-cmcc3000-wifi.py openwrt wifi-source
           cp openwrt/cmcc3000-sources.json build-logs/
-          mkdir -p openwrt/package/custom
-          cp -a local_packages/npc local_packages/luci-app-nps openwrt/package/custom/
       - name: Update feeds and verify configuration
         run: |
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          mkdir -p package/custom
+          cp -a ../local_packages/npc ../local_packages/luci-app-nps package/custom/
+          rm -rf tmp
           make defconfig 2>&1 | tee ../build-logs/defconfig.log
           for symbol in CONFIG_TARGET_mediatek_filogic_DEVICE_cmcc_rax3000m CONFIG_PACKAGE_kmod-mt_wifi CONFIG_PACKAGE_kmod-warp CONFIG_PACKAGE_kmod-conninfra CONFIG_PACKAGE_kmod-mediatek_hnat CONFIG_PACKAGE_mtwifi-cfg CONFIG_PACKAGE_luci-app-mtwifi-cfg CONFIG_PACKAGE_npc CONFIG_PACKAGE_luci-app-nps; do
             grep -qx "$symbol=y" .config || { echo "::error::Missing $symbol"; exit 1; }
