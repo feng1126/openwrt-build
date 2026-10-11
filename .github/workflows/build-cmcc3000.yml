@@ -26,11 +26,13 @@ jobs:
       - name: Update feeds and verify configuration
         run: |
           cd openwrt
+          cp .config ../build-logs/cmcc3000.config.seed
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           mkdir -p package/custom
           cp -a ../local_packages/npc ../local_packages/luci-app-nps package/custom/
           rm -rf tmp
+          cp ../build-logs/cmcc3000.config.seed .config
           make defconfig 2>&1 | tee ../build-logs/defconfig.log
           for symbol in CONFIG_TARGET_mediatek_filogic_DEVICE_cmcc_rax3000m CONFIG_PACKAGE_kmod-mt_wifi CONFIG_PACKAGE_kmod-warp CONFIG_PACKAGE_kmod-conninfra CONFIG_PACKAGE_kmod-mediatek_hnat CONFIG_PACKAGE_mtwifi-cfg CONFIG_PACKAGE_luci-app-mtwifi-cfg CONFIG_PACKAGE_npc CONFIG_PACKAGE_luci-app-nps; do
             grep -qx "$symbol=y" .config || { echo "::error::Missing $symbol"; exit 1; }
