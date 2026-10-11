@@ -236,3 +236,7 @@ PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；
 ## NPS 客户端
 
 固件内置 `npc` v0.26.38 ARM64 官方发布客户端与 `luci-app-nps`，下载文件使用 SHA256 校验。入口为 **服务 → NPS 客户端**，支持连接配置、运行状态及启停。公网端口转发在 NPS 服务端管理。新安装默认不启用，不内置服务器地址或密钥；保留配置升级沿用 `/etc/config/npc` 的设置。
+
+## CMCC RAX3000M NAND 独立构建
+
+Actions 中选择 **Build CMCC RAX3000M OpenWrt MTK WiFi** 手动运行。使用官方 OpenWrt `openwrt-24.10`，配合 padavanonly `openwrt-24.10-6.6` 固定提交的 MTK Wi-Fi 7.6.6.1、conninfra/WARP/HNAT 及 Linux 6.6 平台适配。仅针对已确认的 NAND 分区布局；eMMC 版不适用。包含 Wi-Fi LuCI、NPS LuCI 和 zram。源提交写入发布附件，独立发布标签，不改变 Nokia 固件的 Latest，也不自动刷写设备。
