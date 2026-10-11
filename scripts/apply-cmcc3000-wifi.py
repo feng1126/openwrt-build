@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Import the Linux 6.6 MTK wireless/platform stack into official OpenWrt."""
 from pathlib import Path
-import shutil,sys,json,subprocess,re
+import shutil,sys,json,subprocess,re,hashlib
 base=Path(sys.argv[1]).resolve();src=Path(sys.argv[2]).resolve()
 def tree(rel):
  s=src/rel;d=base/rel
@@ -53,6 +53,14 @@ for rel in ['package/mtk/drivers','package/network/utils/iwinfo','package/networ
  tree(rel)
 for name in ['datconf','mtwifi-cfg','luci-app-mtwifi-cfg']:
  tree('package/mtk/applications/'+name)
+# The donor vendors this source archive in dl/ instead of defining a download URL.
+archive='datconf-6bb733f7.tar.bz2'
+checksum='c1632b1950407e731c8a36b14d50d6e04bed7e7218938283e06e16ac9050d20b'
+if hashlib.sha256((src/'dl'/archive).read_bytes()).hexdigest() != checksum:
+ raise RuntimeError('Datconf source archive checksum mismatch')
+(base/'dl').mkdir(exist_ok=True)
+shutil.copy2(src/'dl'/archive,base/'dl'/archive)
+
 # Declare the vendor HNAT kernel module required by mt_wifi and warp.
 p=base/'package/kernel/linux/modules/netdevices.mk';s=p.read_text()
 v=(src/'package/kernel/linux/modules/netdevices.mk').read_text()

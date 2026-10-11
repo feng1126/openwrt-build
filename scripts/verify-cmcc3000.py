@@ -37,7 +37,12 @@ if mode == 'config':
     for name in ['WIFI_RAM_CODE_MT7981.bin', '7981_WACPU_RAM_CODE_release.bin',
                  'mt7981_patch_e1_hdr.bin']:
         require((firmware / name).is_file(), 'Missing WiFi firmware: ' + name)
-    print('MT7981 profile, dependencies, chipset flags and firmware sources verified')
+    archive = base / 'dl/datconf-6bb733f7.tar.bz2'
+    require(archive.is_file(), 'Missing bundled datconf source archive')
+    require(hashlib.sha256(archive.read_bytes()).hexdigest() ==
+            'c1632b1950407e731c8a36b14d50d6e04bed7e7218938283e06e16ac9050d20b',
+            'Bundled datconf source archive checksum mismatch')
+    print('MT7981 dependencies, firmware and bundled datconf sources verified')
 elif mode == 'firmware':
     target = base / 'bin/targets/mediatek/filogic'
     profiles = json.loads((target / 'profiles.json').read_text())
