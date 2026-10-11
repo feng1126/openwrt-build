@@ -38,6 +38,7 @@ jobs:
           cp ../build-logs/cmcc3000.config.seed .config
           make defconfig 2>&1 | tee ../build-logs/defconfig.log
           python3 ../scripts/verify-cmcc3000.py . config
+          python3 ../scripts/check-cmcc3000-formats.py . > ../build-logs/format-audit.log
       - name: Download sources
         run: |
           cd openwrt
@@ -45,7 +46,7 @@ jobs:
       - name: Build firmware
         run: |
           cd openwrt
-          make -j$(nproc) V=s 2>&1 | tee ../build-logs/build.log || make -j1 V=s 2>&1 | tee ../build-logs/build-retry.log
+          make -k -j$(nproc) V=s 2>&1 | tee ../build-logs/build.log || make -k -j1 V=s 2>&1 | tee ../build-logs/build-retry.log
       - name: Collect firmware
         run: |
           python3 scripts/verify-cmcc3000.py openwrt firmware

@@ -75,6 +75,13 @@ s=s[:a]+"int wed_release_rx_token(struct wed_entry *wed, u32 token_id)\n{\n\tret
 old='buf_free_task((unsigned long)wed);'
 if s.count(old) != 1: raise RuntimeError('Unexpected WARP buffer free call')
 p.write_text(s.replace(old, 'buf_free_task(wed);'))
+# MT7981 uses the v2 register implementation; its reset diagnostics also
+# passed a return code with no matching format conversion.
+p=base/'package/mtk/drivers/warp/src/regs/reg_v2/warp_hw_v2.c'
+s=p.read_text()
+old='"%s(): check ser_busy_cnt: echo 18 > wed\\n", __func__, ret'
+if s.count(old) != 3: raise RuntimeError('Unexpected WARP v2 reset logs')
+p.write_text(s.replace(old, '"%s(): check ser_busy_cnt: echo 18 > wed\\n", __func__'))
 for name in ['datconf','mtwifi-cfg','luci-app-mtwifi-cfg']:
  tree('package/mtk/applications/'+name)
 # The donor vendors this source archive in dl/ instead of defining a download URL.
@@ -104,6 +111,7 @@ s=s[:a]+block+s[b:];p.write_text(s)
 seed=(src/'defconfig/mt7981-ax3000.config').read_text().splitlines()
 flags=[l for l in seed if re.match(r'(?:# )?CONFIG_(MTK_|WARP_|WED_|FPGA_|CONNINFRA_|first_card|second_card|third_card|WIFI_|RT_FIRST_|RT_SECOND_)',l)]
 config='''CONFIG_TARGET_mediatek=y
+# CONFIG_KERNEL_WERROR is not set
 CONFIG_TARGET_mediatek_filogic=y
 CONFIG_TARGET_mediatek_filogic_DEVICE_cmcc_rax3000m=y
 CONFIG_PACKAGE_kmod-mt_wifi=y

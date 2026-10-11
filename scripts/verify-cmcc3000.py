@@ -15,6 +15,8 @@ def require(condition, message):
 
 if mode == 'config':
     config = set((base / '.config').read_text().splitlines())
+    require('# CONFIG_KERNEL_WERROR is not set' in config,
+            'Kernel warning policy differs from the donor tree')
     required = ['TARGET_mediatek_filogic_DEVICE_cmcc_rax3000m']
     required += ['PACKAGE_' + p for p in [
         'kmod-mt_wifi', 'kmod-warp', 'kmod-conninfra', 'kmod-mediatek_hnat',
