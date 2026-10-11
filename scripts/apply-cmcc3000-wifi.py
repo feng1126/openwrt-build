@@ -63,6 +63,18 @@ old='\tstruct wifi_entry *wifi = &warp->wifi;\n\tstruct wifi_hw *hw = &wifi->hw;
 if body.count(old) != 1: raise RuntimeError('Unexpected WARP ISR locals')
 s=s[:a]+body.replace(old,'')+s[b:]
 p.write_text(s)
+# This token release callback is disabled in the donor. Preserve its return
+# behavior without compiling leftover variables and an unreachable label.
+p=base/'package/mtk/drivers/warp/src/wed.c'
+s=p.read_text()
+a=s.index('int wed_release_rx_token(');b=s.index('\n#endif\t/* WED_RX_D_SUPPORT */',a)
+body=s[a:b]
+if '#if 0' not in body or body.count('err:') != 1:
+ raise RuntimeError('Unexpected WARP token release implementation')
+s=s[:a]+"int wed_release_rx_token(struct wed_entry *wed, u32 token_id)\n{\n\treturn wed ? 0 : -1;\n}\n"+s[b:]
+old='buf_free_task((unsigned long)wed);'
+if s.count(old) != 1: raise RuntimeError('Unexpected WARP buffer free call')
+p.write_text(s.replace(old, 'buf_free_task(wed);'))
 for name in ['datconf','mtwifi-cfg','luci-app-mtwifi-cfg']:
  tree('package/mtk/applications/'+name)
 # The donor vendors this source archive in dl/ instead of defining a download URL.
