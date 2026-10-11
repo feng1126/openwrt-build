@@ -20,6 +20,20 @@ s=p.read_text()
 if s.count('+static struct hnat_desc {') != 3:
  raise RuntimeError('Unexpected donor HNAT descriptor patch')
 p.write_text(s.replace('+static struct hnat_desc {', '+struct hnat_desc {'))
+# MT7981 shaper arrays have MTK_QDMA_NUM_QUEUES elements (16), not 64.
+p=base/'target/linux/mediatek/patches-6.6/9999-01-hnat.patch'
+s=p.read_text()
+if s.count('+\tfor (i = 0; i < 64; i++)') != 3:
+ raise RuntimeError('Unexpected donor QDMA queue loops')
+p.write_text(s.replace('+\tfor (i = 0; i < 64; i++)',
+                       '+\tfor (i = 0; i < MTK_QDMA_NUM_QUEUES; i++)'))
+# Copy into the destination buffer using its size, not the source size.
+p=base/'target/linux/mediatek/files-6.6/drivers/net/wireless/wifi_utility/pci_mediatek_rbus.c'
+s=p.read_text()
+old='strncpy(state, "state_epa", sizeof("state_epa"));'
+if s.count(old) != 1: raise RuntimeError('Unexpected donor pinctrl state copy')
+p.write_text(s.replace(old, 'strncpy(state, "state_epa", sizeof(state));'))
+
 for part in ['backport-6.6','pending-6.6','hack-6.6','files','files-6.6']:
  rel='target/linux/generic/'+part
  if (src/rel).is_dir():tree(rel)
