@@ -33,6 +33,16 @@ s=p.read_text()
 old='strncpy(state, "state_epa", sizeof("state_epa"));'
 if s.count(old) != 1: raise RuntimeError('Unexpected donor pinctrl state copy')
 p.write_text(s.replace(old, 'strncpy(state, "state_epa", sizeof(state));'))
+# Both shaper helpers must reject negative and one-past-the-end queue IDs.
+p=base/'target/linux/mediatek/patches-6.6/999-2730-net-ethernet-mtk_eth_soc-record-PPPQ-status-in-the-mtk_qdma_shaper.patch'
+s=p.read_text()
+old='!mtk_is_netsys_v3_or_greater(eth) || idx > MTK_QDMA_NUM_QUEUES'
+if s.count(old) != 1: raise RuntimeError('Unexpected donor shaper bounds')
+s=s.replace(old, '!mtk_is_netsys_v3_or_greater(eth) || idx < 0 || idx >= MTK_QDMA_NUM_QUEUES')
+old='+\tif (!mtk_is_netsys_v3_or_greater(eth))'
+if s.count(old) != 1: raise RuntimeError('Unexpected donor shaper update guard')
+p.write_text(s.replace(old, '+\tif (!mtk_is_netsys_v3_or_greater(eth) || idx < 0 || idx >= MTK_QDMA_NUM_QUEUES)'))
+
 
 for part in ['backport-6.6','pending-6.6','hack-6.6','files','files-6.6']:
  rel='target/linux/generic/'+part
@@ -60,7 +70,7 @@ block=block.replace('kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware','kmod
 s=s[:a]+block+s[b:];p.write_text(s)
 # Generate a small router profile, keeping the complete donor MT7981 driver flags.
 seed=(src/'defconfig/mt7981-ax3000.config').read_text().splitlines()
-flags=[l for l in seed if re.match(r'(?:# )?CONFIG_(MTK_|WARP_|CONNINFRA_|first_card|second_card|third_card|WIFI_|RT_FIRST_|RT_SECOND_)',l)]
+flags=[l for l in seed if re.match(r'(?:# )?CONFIG_(MTK_|WARP_|WED_|FPGA_|CONNINFRA_|first_card|second_card|third_card|WIFI_|RT_FIRST_|RT_SECOND_)',l)]
 config='''CONFIG_TARGET_mediatek=y
 CONFIG_TARGET_mediatek_filogic=y
 CONFIG_TARGET_mediatek_filogic_DEVICE_cmcc_rax3000m=y

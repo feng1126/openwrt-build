@@ -240,3 +240,7 @@ PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；
 ## CMCC RAX3000M NAND 独立构建
 
 Actions 中选择 **Build CMCC RAX3000M OpenWrt MTK WiFi** 手动运行。使用官方 OpenWrt `openwrt-24.10`，配合 padavanonly `openwrt-24.10-6.6` 固定提交的 MTK Wi-Fi 7.6.6.1、conninfra/WARP/HNAT 及 Linux 6.6 平台适配。仅针对已确认的 NAND 分区布局；eMMC 版不适用。包含 Wi-Fi LuCI、NPS LuCI 和 zram。源提交写入发布附件，独立发布标签，不改变 Nokia 固件的 Latest，也不自动刷写设备。
+
+构建会预检查 MT7981 芯片选项、HNAT 的 iptables NAT 依赖、MTK Wi-Fi 固件文件及 LuCI/NPS 依赖。发布前核对 `profiles.json`、包清单、镜像 SHA256、NAND 分区大小和 sysupgrade 板型元数据。移植脚本修正上游结构体声明、QDMA 队列遍历/下标边界和 pinctrl 字符串复制问题。
+
+当前设备核对为 512 MB 内存、UBI/FIT NAND 布局，Wi-Fi EEPROM 路径与 MT7981 配置一致。编译和静态检查仍不能替代刷机前 `sysupgrade -T` 校验，以及启动后 WAN、双频 Wi-Fi 和硬件加速实测；官方 24.10 分支和 feeds 持续更新，也可能需要后续重新适配。
