@@ -51,6 +51,18 @@ for rel in ['target/linux/generic/config-6.6','include/kernel-6.6']:
  shutil.copy2(src/rel,base/rel)
 for rel in ['package/mtk/drivers','package/network/utils/iwinfo','package/network/config/wifi-scripts']:
  tree(rel)
+# Correct WARP diagnostics rejected by the official compiler's format checks.
+p=base/'package/mtk/drivers/warp/src/warp_main.c'
+s=p.read_text()
+old='"%s()======WO PC LR dump======\\n", __func__, heart_beat'
+if s.count(old) != 4: raise RuntimeError('Unexpected WARP diagnostic calls')
+s=s.replace(old, '"%s()======WO PC LR dump======\\n", __func__')
+a=s.index('warp_isr_handler(void *priv_data)');b=s.index('EXPORT_SYMBOL(warp_isr_handler);',a)
+body=s[a:b]
+old='\tstruct wifi_entry *wifi = &warp->wifi;\n\tstruct wifi_hw *hw = &wifi->hw;\n'
+if body.count(old) != 1: raise RuntimeError('Unexpected WARP ISR locals')
+s=s[:a]+body.replace(old,'')+s[b:]
+p.write_text(s)
 for name in ['datconf','mtwifi-cfg','luci-app-mtwifi-cfg']:
  tree('package/mtk/applications/'+name)
 # The donor vendors this source archive in dl/ instead of defining a download URL.
