@@ -197,7 +197,7 @@ The sysupgrade preservation list includes `/etc/natmap/`.
 
 Includes pinned ImmortalWrt Full Cone module and userspace patches, disabled by
 default. After flashing, use **Network > Firewall > General Settings > Full Cone NAT**
-to enable IPv4 Full Cone for masquerading zones. This improves UDP peer
+to enable IPv4 / IPv6 Full Cone for masquerading zones. This improves UDP peer
 connectivity, not bandwidth. See [patch sources and verification](patches/fullcone/README.md).
 
 ## Geo 数据体积与更新
@@ -236,3 +236,5 @@ PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；
 ## NPS 客户端
 
 固件内置 `npc` v0.26.38 ARM64 官方发布客户端与 `luci-app-nps`，下载文件使用 SHA256 校验。入口为 **服务 → NPS 客户端**，支持连接配置、运行状态及启停。公网端口转发在 NPS 服务端管理。新安装默认不启用，不内置服务器地址或密钥；保留配置升级沿用 `/etc/config/npc` 的设置。
+
+FullCone uses one IPv4 / IPv6 toggle in LuCI; enabling or disabling it updates both `fullcone` and `fullcone6`. IPv6 rules apply only to zones with IPv6 masquerading enabled; native IPv6 routing is unchanged.

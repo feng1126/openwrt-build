@@ -1,14 +1,15 @@
 --- a/htdocs/luci-static/resources/view/firewall/zones.js
 +++ b/htdocs/luci-static/resources/view/firewall/zones.js
-@@ -55,6 +55,11 @@
- 		};
- 
+@@ -59,2 +59,11 @@
  		o = s.option(form.Flag, 'drop_invalid', _('Drop invalid packets'));
 +
-+		o = s.option(form.Flag, 'fullcone', _('Full Cone NAT'),
-+			_('Enable IPv4 Full Cone NAT for masquerading zones. Improves UDP peer connectivity; does not increase bandwidth.'));
-+		o.default = '0';
-+		o.rmempty = false;
++        o = s.option(form.Flag, 'fullcone', _('Full Cone NAT (IPv4 / IPv6)'),
++            _('Enable Full Cone NAT for IPv4 and IPv6 masquerading zones. Native IPv6 does not require NAT66.'));
++        o.default = '0';
++        o.rmempty = false;
++        o.write = function(section_id, value) {
++            uci.set('firewall', section_id, 'fullcone', value);
++            uci.set('firewall', section_id, 'fullcone6', value);
++        };
  
- 		let p = [
- 			s.option(form.ListValue, 'input', _('Input', 'firewall input')),
+# End of FullCone LuCI patch

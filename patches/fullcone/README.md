@@ -15,7 +15,7 @@ Local adaptations:
 - Probe Full Cone only when requested, falling back to regular NAT for both
   address families if the expression is unavailable.
 - Renumber the nftables patch to 900, after OpenWrt build-system patches.
-- Add an IPv4 Full Cone switch and Chinese text in the standard firewall UI.
+- Add one combined IPv4 / IPv6 Full Cone switch and Chinese text in the standard firewall UI.
 - Enable libnftnl autoreconf after modifying Makefile.am.
 
 The installer runs after feeds update and before defconfig. CI checks package
@@ -34,3 +34,7 @@ use new UDP connections from a LAN client to test end-to-end NAT behavior.
 Rule generation alone does not prove the public NAT type. Airoha hardware
 flow-offload compatibility requires testing on the device; disable offloading
 when isolating NAT behavior. Turn off the Full Cone flag to restore normal NAT.
+
+IPv6 Full Cone NAT is controlled by `firewall.@defaults[0].fullcone6`; it only generates rules for zones where IPv6 masquerading (`masq6`) is enabled. Enabling the switch does not enable NAT66 or change native IPv6 routing.
+
+The single LuCI switch writes both `fullcone` and `fullcone6`. IPv6 rules still require zone `masq6`; the switch never enables NAT66 itself.
