@@ -30,14 +30,16 @@ def main():
             raise SystemExit(f'Required package missing: {relative}')
         (target / 'patches').mkdir(exist_ok=True)
         patch_directory = PATCHES / component
-        if component == 'nftables':
+        if component in ('nftables', 'libnftnl'):
             version = re.search(r'^PKG_VERSION\s*:?=\s*(\d+\.\d+\.\d+)\s*$',
                                 (target / 'Makefile').read_text(), re.M)
             if not version:
-                raise SystemExit('Cannot determine nftables source version')
-            if tuple(map(int, version[1].split('.'))) >= (1, 1, 7):
+                raise SystemExit('Cannot determine ' + component + ' source version')
+            if component == 'nftables' and tuple(map(int, version[1].split('.'))) >= (1, 1, 7):
                 patch_directory = PATCHES / 'nftables-1.1.7'
-            print('nftables ' + version[1] + ': using ' + patch_directory.name, flush=True)
+            if component == 'libnftnl' and tuple(map(int, version[1].split('.'))) >= (1, 3, 2):
+                patch_directory = PATCHES / 'libnftnl-1.3.2'
+            print(component + ' ' + version[1] + ': using ' + patch_directory.name, flush=True)
         for patch in sorted(patch_directory.glob('*.patch')):
             output = target / 'patches' / patch.name
             if output.exists() and output.read_bytes() != patch.read_bytes():

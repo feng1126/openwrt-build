@@ -240,3 +240,5 @@ PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；
 FullCone uses one IPv4 / IPv6 toggle in LuCI; enabling or disabling it updates both `fullcone` and `fullcone6`. IPv6 rules apply only to zones with IPv6 masquerading enabled; native IPv6 routing is unchanged.
 
 FullCone 补丁根据 nftables 版本自动选择：旧版本沿用原补丁，1.1.7 及更新版本使用适配全局 NAT 词法规则的补丁。构建前仍执行源码准备和关键符号检查。
+
+libnftnl 1.3.2 及更新版本的 FullCone 回调使用新增 `byteorder` 参数；脚本按库版本选择对应补丁，兼容旧库接口。

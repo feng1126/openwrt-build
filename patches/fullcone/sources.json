@@ -10,6 +10,7 @@
     "patches/fullcone/luci/001-fullcone-switch.patch": "21f175cc82a0aa6f15bffdaaa414119934b6182e06419677b3b53cc3fe1448e6",
     "patches/fullcone/luci/zh_Hans.po": "cb279be9dffc2d8107767724d08869674ee4fae1a90466c0464029de9bacdfdd",
     "patches/fullcone/nftables/900-nftables-add-fullcone-expression-support.patch": "2e844e5ae01b17db7be305c919f786912c771c3ff4faa6ab6b8f2295ea4764be",
-    "patches/fullcone/nftables-1.1.7/900-nftables-add-fullcone-expression-support.patch": "b83bf58a63c709142fc103d6a3a6f8e418302f3a31d9c42c9e303c9174dcd315"
+    "patches/fullcone/nftables-1.1.7/900-nftables-add-fullcone-expression-support.patch": "b83bf58a63c709142fc103d6a3a6f8e418302f3a31d9c42c9e303c9174dcd315",
+    "patches/fullcone/libnftnl-1.3.2/001-libnftnl-add-fullcone-expression-support.patch": "cb95ff6fada33edd39a9a266122449c4c6720d98dcf5f74509af8d8cacbc0908"
   }
 }
