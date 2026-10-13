@@ -2,8 +2,8 @@ name: Build XG-040G-MD OpenWrt
 
 on:
   schedule:
-    # Daily at 03:17 Asia/Shanghai.
-    - cron: '17 19 * * *'
+    # Daily at 03:27 Asia/Shanghai.
+    - cron: '27 19 * * *'
   workflow_dispatch:
     inputs:
       base_branch:
