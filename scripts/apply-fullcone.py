@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -28,7 +29,16 @@ def main():
         if not (target / 'Makefile').is_file():
             raise SystemExit(f'Required package missing: {relative}')
         (target / 'patches').mkdir(exist_ok=True)
-        for patch in sorted((PATCHES / component).glob('*.patch')):
+        patch_directory = PATCHES / component
+        if component == 'nftables':
+            version = re.search(r'^PKG_VERSION\s*:?=\s*(\d+\.\d+\.\d+)\s*$',
+                                (target / 'Makefile').read_text(), re.M)
+            if not version:
+                raise SystemExit('Cannot determine nftables source version')
+            if tuple(map(int, version[1].split('.'))) >= (1, 1, 7):
+                patch_directory = PATCHES / 'nftables-1.1.7'
+            print('nftables ' + version[1] + ': using ' + patch_directory.name, flush=True)
+        for patch in sorted(patch_directory.glob('*.patch')):
             output = target / 'patches' / patch.name
             if output.exists() and output.read_bytes() != patch.read_bytes():
                 raise SystemExit(f'Conflicting patch: {output}')

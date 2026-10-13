@@ -238,3 +238,5 @@ PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；
 固件内置 `npc` v0.26.38 ARM64 官方发布客户端与 `luci-app-nps`，下载文件使用 SHA256 校验。入口为 **服务 → NPS 客户端**，支持连接配置、运行状态及启停。公网端口转发在 NPS 服务端管理。新安装默认不启用，不内置服务器地址或密钥；保留配置升级沿用 `/etc/config/npc` 的设置。
 
 FullCone uses one IPv4 / IPv6 toggle in LuCI; enabling or disabling it updates both `fullcone` and `fullcone6`. IPv6 rules apply only to zones with IPv6 masquerading enabled; native IPv6 routing is unchanged.
+
+FullCone 补丁根据 nftables 版本自动选择：旧版本沿用原补丁，1.1.7 及更新版本使用适配全局 NAT 词法规则的补丁。构建前仍执行源码准备和关键符号检查。
