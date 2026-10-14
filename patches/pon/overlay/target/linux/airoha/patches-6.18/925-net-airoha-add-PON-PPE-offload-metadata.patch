@@ -43,10 +43,29 @@ Signed-off-by: pbs05 <27010143+pbs05@users.noreply.github.com>
  			  u16 hash, bool rx_wlan);
 --- a/drivers/net/ethernet/airoha/airoha_eth.c
 +++ b/drivers/net/ethernet/airoha/airoha_eth.c
-@@ -3936,11 +3936,33 @@ drop:
+@@ -3936,11 +3936,63 @@ drop:
  }
  EXPORT_SYMBOL_GPL(airoha_eth_pon_xmit_control);
  
++/* Compare fields rather than padding; preserve classifier ordering. */
++static bool
++airoha_eth_pon_same_flows(const struct airoha_pon_flow_table *a,
++                         const struct airoha_pon_flow_table *b)
++{
++	unsigned int i;
++
++	if (!a || !b)
++		return a == b;
++	if (a->count != b->count)
++		return false;
++	for (i = 0; i < a->count; i++)
++		if (a->entries[i].tag != b->entries[i].tag ||
++		    a->entries[i].vlan_id != b->entries[i].vlan_id ||
++		    a->entries[i].pbit_mask != b->entries[i].pbit_mask)
++			return false;
++	return true;
++}
++
 +static void
 +airoha_eth_pon_commit_config(struct airoha_gdm_dev *dev,
 +			     struct airoha_pon_flow_table *table, u32 qdma_tag)
@@ -59,6 +78,17 @@ Signed-off-by: pbs05 <27010143+pbs05@users.noreply.github.com>
 +	 * synchronize_net() later drains software readers of the old table.
 +	 */
 +	mutex_lock(&flow_offload_mutex);
++	old = rcu_dereference_protected(dev->pon_flow_table,
++				       lockdep_is_held(&flow_offload_mutex));
++	/* Repeated OMCI provisioning must not evict unchanged PPE flows.
++	 * Epoch teardown still clears mappings through this same path.
++	 */
++	if (READ_ONCE(dev->pon_qdma_tag) == qdma_tag &&
++	    airoha_eth_pon_same_flows(old, table)) {
++		mutex_unlock(&flow_offload_mutex);
++		kfree(table);
++		return;
++	}
 +	old = rcu_replace_pointer(dev->pon_flow_table, table,
 +				  lockdep_is_held(&flow_offload_mutex));
 +	WRITE_ONCE(dev->pon_qdma_tag, qdma_tag);

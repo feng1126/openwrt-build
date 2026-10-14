@@ -233,6 +233,12 @@ main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成
 
 PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；未启用实验桥接卸载，因此移除原生 L2B 布局补丁。官方底版自带的相关补丁继续保留。PON 数据/控制通道、PCS/光模块 GPIO、PPE GEM/T-CONT 元数据、共享 QDMA/DMA、VLAN MTU、NPU mailbox 超时和外部 SerDes NBQ 修复保留，分别服务于光接入、数据通道正确性和驱动稳定性。
 
+PON 配置优化：在 `flow_offload_mutex` 内按字段比较业务映射和 QDMA 承载参数，相同配置不再替换映射、清除 PPE 表项或等待网络 RCU 同步。映射顺序及字段变化、清空和恢复业务仍按原路径处理；逐字段比较避免结构体填充字节影响判断。此优化减少重复配置的开销，不改变光线路检测、注册时序或动态 P-bit 卸载限制。验证命令：`python3 tests/test-pon-config-dedup.py`。实机性能收益仍需新固件负载测试。
+
+PON 重复业务配置优化：确认本次激活周期的 T-CONT 分配后，只有已配置、carrier 有效且完整业务映射相同才跳过 GEM 重写及 carrier/TX 队列切换。T-CONT 重分配、断线恢复、配置失败重试和单播/组播变化仍执行配置。验证命令：`python3 tests/test-pon-data-path-dedup.py`。
+
+PON 状态查询内存优化：OMCI/OAM 控制请求共用 256 字节读缓冲（原默认 8 KiB），单行请求限制为 1024 字节，保持 STATUS、DATAPATH、EVENTS 命令及响应格式不变。减少查询时临时缓冲分配，限制异常长请求的内存增长；不缩减业务队列、诊断事件历史或 OMCI 重传缓存。用户态测试：在 `local_packages/pon/airoha-pon-daemons/src` 执行 `cargo test --locked`。
+
 ## NPS 客户端
 
 固件内置 `npc` v0.26.38 ARM64 官方发布客户端与 `luci-app-nps`，下载文件使用 SHA256 校验。入口为 **服务 → NPS 客户端**，支持连接配置、运行状态及启停。公网端口转发在 NPS 服务端管理。新安装默认不启用，不内置服务器地址或密钥；保留配置升级沿用 `/etc/config/npc` 的设置。

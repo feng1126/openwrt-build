@@ -288,6 +288,29 @@ airoha_xpon_data_path_has_gem(const struct airoha_xpon_data_path_entry *entries,
 	return false;
 }
 
+/* Caller has resolved T-CONTs for the current activation epoch. */
+static bool airoha_xpon_same_data_paths(
+	const struct airoha_xpon_data_path_state *state,
+	const struct airoha_xpon_data_path_entry *next, unsigned int count)
+{
+	unsigned int i;
+
+	if (!state->configured || state->count != count)
+		return false;
+	for (i = 0; i < count; i++) {
+		const struct airoha_xpon_data_path_entry *old = &state->entries[i];
+
+		if (old->alloc_id != next[i].alloc_id ||
+		    old->gem_id != next[i].gem_id ||
+		    old->vlan_id != next[i].vlan_id ||
+		    old->tcont != next[i].tcont ||
+		    old->pbit_mask != next[i].pbit_mask ||
+		    old->multicast != next[i].multicast)
+			return false;
+	}
+	return true;
+}
+
 static int airoha_xpon_apply_data_paths_locked(
 	struct airoha_xpon *xpon,
 	const struct airoha_xpon_data_path_entry *requested, unsigned int count)
@@ -335,6 +358,14 @@ static int airoha_xpon_apply_data_paths_locked(
 			goto out_ploam;
 	}
 	WRITE_ONCE(xpon->data_path.pending_count, 0);
+
+	/* A failed apply leaves carrier down; retry all hardware writes then.
+	 * Resolve Alloc-IDs above even for duplicates, so stale OMCI state
+	 * cannot bypass this epoch's PLOAM assignment checks.
+	 */
+	if (netif_carrier_ok(xpon->pon_netdev) &&
+	    airoha_xpon_same_data_paths(&xpon->data_path, next, count))
+		goto out_ploam;
 
 	/* Keep Linux TX queues stopped until the complete flow table is active. */
 	airoha_xpon_set_data_path_link(xpon, false);

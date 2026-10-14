@@ -2,7 +2,7 @@
 
 use std::collections::VecDeque;
 use std::fs;
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{self, Write};
 use std::os::unix::net::UnixStream;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -134,8 +134,7 @@ pub fn start_server(
 }
 
 fn handle_client(mut stream: UnixStream, status: &StatusHub) -> io::Result<()> {
-    let mut request = String::new();
-    BufReader::new(&stream).read_line(&mut request)?;
+    let request = crate::control::read_request(&stream)?;
     let fields: Vec<&str> = request.split_whitespace().collect();
 
     match fields.as_slice() {
