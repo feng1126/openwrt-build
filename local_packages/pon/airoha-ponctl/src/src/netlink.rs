@@ -368,6 +368,8 @@ const FRONTEND_FIELDS: &[(&str, StatusKind)] = &[
     ("tx_bias_8472", StatusKind::U32),
     ("tx_power_8472", StatusKind::U32),
     ("rx_power_8472", StatusKind::U32),
+    ("tx_ddmi_calibration", StatusKind::String),
+    ("calibration_profile", StatusKind::String),
 ];
 
 const REGISTRATION_FIELDS: &[(&str, StatusKind)] = &[

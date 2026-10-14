@@ -35,6 +35,7 @@ enum airoha_pon_frontend_mode {
  * @AIROHA_PON_FRONTEND_CALIBRATION_MISSING: Board calibration source is empty
  * @AIROHA_PON_FRONTEND_CALIBRATION_INVALID: Source failed format validation
  * @AIROHA_PON_FRONTEND_CALIBRATION_NOT_REQUIRED: Device stores its own settings
+ * @AIROHA_PON_FRONTEND_CALIBRATION_FALLBACK: DDMI uses another profile's field
  *
  * Diagnostics expose this state independently of the provider's TX gate.
  */
@@ -44,6 +45,7 @@ enum airoha_pon_frontend_calibration_state {
 	AIROHA_PON_FRONTEND_CALIBRATION_MISSING,
 	AIROHA_PON_FRONTEND_CALIBRATION_INVALID,
 	AIROHA_PON_FRONTEND_CALIBRATION_NOT_REQUIRED,
+	AIROHA_PON_FRONTEND_CALIBRATION_FALLBACK,
 };
 
 /**
@@ -79,6 +81,8 @@ enum airoha_pon_frontend_diagnostics_valid {
  * @rx_power: RX optical power in 0.1 uW units
  * @calibration: Device calibration state
  * @tx_gate_enabled: Burst-enable signal is controlled by the PON MAC
+ * @tx_ddmi_calibration: TX measurement calibration, separate from analog settings
+ * @calibration_profile: Static active profile name, or NULL when unavailable
  */
 struct airoha_pon_frontend_diagnostics {
 	u32 valid;
@@ -89,6 +93,8 @@ struct airoha_pon_frontend_diagnostics {
 	u16 rx_power;
 	enum airoha_pon_frontend_calibration_state calibration;
 	bool tx_gate_enabled;
+	enum airoha_pon_frontend_calibration_state tx_ddmi_calibration;
+	const char *calibration_profile;
 };
 
 /**

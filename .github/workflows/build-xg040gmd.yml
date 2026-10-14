@@ -59,6 +59,7 @@ jobs:
         run: |
           python3 tests/test-pon-config-dedup.py
           python3 tests/test-pon-data-path-dedup.py
+          python3 tests/test-en7572-calibration.py
 
       - name: Clone official OpenWrt source
         id: source

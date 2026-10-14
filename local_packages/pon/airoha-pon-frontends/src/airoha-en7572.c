@@ -120,6 +120,7 @@ struct en7572 {
 	u16 chip_rev;
 	bool bob_a0_valid;
 	bool bob_a2_valid;
+	bool tx_ddmi_a0_fallback;
 	bool prepared;
 	enum airoha_pon_frontend_mode prepared_mode;
 	bool tx_gate_enabled;
@@ -163,11 +164,16 @@ static void en7572_apply_tx_ddmi_fallback(struct device *dev, struct en7572 *en)
 	/* Keep both wavelength profiles on the same TX DDMI code when A0 is empty. */
 	if (a0_tssi != U32_MAX)
 		return;
+	/* A populated A2 table does not imply its TX DDMI field is populated. */
+	if (!en->bob_a2_valid || a2_tssi == U32_MAX) {
+		dev_warn(dev, "BOB A0 TX DDMI missing; no valid A2 fallback source\n");
+		return;
+	}
 
 	memcpy(a0 + EN7572_BOB_TSSI_CAL_1, a2 + EN7572_BOB_TSSI_CAL_1,
 	       sizeof(a0_tssi));
-	dev_warn(dev, "BOB A0 TX DDMI is erased; copied 4 bytes from A2%s\n",
-	         a2_tssi == U32_MAX ? " (A2 source is also erased)" : "");
+	en->tx_ddmi_a0_fallback = true;
+	dev_warn(dev, "BOB A0 TX DDMI uses A2 fallback; A0 analog calibration remains unchanged\n");
 }
 
 /* EN7572 reads use a big-endian 16-bit subaddress and repeated start. */
@@ -363,6 +369,7 @@ static int en7572_load_bob(struct device *dev, struct en7572 *en)
 	 * NVMEM replaces this volatile DM table when available.
 	 */
 	memset(en->bob, 0xff, EN7572_BOB_SIZE);
+	en->tx_ddmi_a0_fallback = false;
 
 	/* The NVMEM cell maps the board storage format to MD32's 512-byte BOB. */
 	cell = devm_nvmem_cell_get(dev, "calibration");
@@ -795,6 +802,21 @@ en7572_get_diagnostics(struct airoha_pon_frontend *frontend,
 		diagnostics->tx_gate_enabled = en->tx_gate_enabled;
 		bob_base = en->prepared ? en7572_bob_base(en->prepared_mode) :
 		                          -EINVAL;
+		if (bob_base >= 0) {
+			diagnostics->calibration_profile =
+				bob_base == EN7572_BOB_A0_BASE ? "a0" : "a2";
+			if (bob_base == EN7572_BOB_A0_BASE && en->tx_ddmi_a0_fallback)
+				diagnostics->tx_ddmi_calibration =
+					AIROHA_PON_FRONTEND_CALIBRATION_FALLBACK;
+			else if (get_unaligned_le32(en->bob + bob_base +
+						   EN7572_BOB_TSSI_CAL_1) == U32_MAX)
+				diagnostics->tx_ddmi_calibration =
+					AIROHA_PON_FRONTEND_CALIBRATION_MISSING;
+			else if ((bob_base == EN7572_BOB_A0_BASE && en->bob_a0_valid) ||
+				 (bob_base == EN7572_BOB_A2_BASE && en->bob_a2_valid))
+				diagnostics->tx_ddmi_calibration =
+					AIROHA_PON_FRONTEND_CALIBRATION_READY;
+		}
 		if ((bob_base == EN7572_BOB_A0_BASE && en->bob_a0_valid) ||
 		    (bob_base == EN7572_BOB_A2_BASE && en->bob_a2_valid) ||
 		    (bob_base < 0 && en->bob_a0_valid && en->bob_a2_valid))

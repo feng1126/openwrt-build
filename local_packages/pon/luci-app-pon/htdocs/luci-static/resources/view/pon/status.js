@@ -390,6 +390,11 @@ function renderLine(item) {
 			ready: _('Loaded'), missing: _('Missing'), invalid: _('Invalid format'),
 			'not-required': _('Not required'), unknown: _('Unknown')
 		})[frontend.calibration] || _('Unknown')),
+		row(_('Active calibration profile'), frontend.calibration_profile || _('Unknown')),
+		row(_('TX power calibration source'), ({
+			ready: _('Native calibration'), fallback: _('A2 fallback (measurement unverified)'),
+			missing: _('Missing'), unknown: _('Unknown')
+		})[frontend.tx_ddmi_calibration] || _('Unknown')),
 		row(_('Frontend TX gate enabled'), frontend.error ?
 			_('Read failed') : displayBoolean(frontend.tx_gate_enabled))
 	);

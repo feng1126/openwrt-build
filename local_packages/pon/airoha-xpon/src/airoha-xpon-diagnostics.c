@@ -85,6 +85,8 @@ static const char *
 calibration_name(enum airoha_pon_frontend_calibration_state state)
 {
 	switch (state) {
+	case AIROHA_PON_FRONTEND_CALIBRATION_FALLBACK:
+		return "fallback";
 	case AIROHA_PON_FRONTEND_CALIBRATION_READY:
 		return "ready";
 	case AIROHA_PON_FRONTEND_CALIBRATION_MISSING:
@@ -185,6 +187,13 @@ int airoha_xpon_put_status(struct sk_buff *reply, struct airoha_xpon *xpon)
 		goto out;
 	if (nla_put_string(reply, XPON_FRONTEND_CALIBRATION,
 	                   calibration_name(optics.calibration)))
+		goto out;
+	if (!optics_error &&
+	    (nla_put_string(reply, XPON_FRONTEND_TX_DDMI_CALIBRATION,
+	                    calibration_name(optics.tx_ddmi_calibration)) ||
+	     (optics.calibration_profile &&
+	      nla_put_string(reply, XPON_FRONTEND_CALIBRATION_PROFILE,
+	                     optics.calibration_profile))))
 		goto out;
 	if ((!optics_error) && nla_put_u8(reply, XPON_FRONTEND_TX_GATE_ENABLED,
 	                                  optics.tx_gate_enabled))
@@ -382,6 +391,9 @@ static int pon_frontend_debug_show(struct seq_file *m, void *unused)
 	seq_printf(m, "error: %d\ncalibration: %s\n", ret,
 	           calibration_name(diagnostics.calibration));
 	if (!ret) {
+		seq_printf(m, "tx_ddmi_calibration: %s\ncalibration_profile: %s\n",
+		           calibration_name(diagnostics.tx_ddmi_calibration),
+		           diagnostics.calibration_profile ?: "unknown");
 		seq_printf(m, "tx_gate_enabled: %d\n",
 		           diagnostics.tx_gate_enabled);
 		if (diagnostics.valid & AIROHA_PON_FRONTEND_DIAG_TEMPERATURE)

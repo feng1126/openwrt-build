@@ -239,6 +239,8 @@ PON 重复业务配置优化：确认本次激活周期的 T-CONT 分配后，�
 
 PON 状态查询内存优化：OMCI/OAM 控制请求共用 256 字节读缓冲（原默认 8 KiB），单行请求限制为 1024 字节，保持 STATUS、DATAPATH、EVENTS 命令及响应格式不变。减少查询时临时缓冲分配，限制异常长请求的内存增长；不缩减业务队列、诊断事件历史或 OMCI 重传缓存。用户态测试：在 `local_packages/pon/airoha-pon-daemons/src` 执行 `cargo test --locked`。
 
+EN7572 校准诊断：A0 TX DDMI 回退只接受有效 A2 校准表中非擦除的 TSSI 字段，保留原生 A0 字段；回退只修改内存中的四字节检测字段。新增 `calibration_profile` 和 `tx_ddmi_calibration` 状态，区分整表校准与发射功率校准来源，LuCI 对 A2 回退明确标注测量未验证。此改动不补齐缺失的 A0 校准，也不保证修复发射功率读数。验证：`python3 tests/test-en7572-calibration.py`。
+
 ## NPS 客户端
 
 固件内置 `npc` v0.26.38 ARM64 官方发布客户端与 `luci-app-nps`，下载文件使用 SHA256 校验。入口为 **服务 → NPS 客户端**，支持连接配置、运行状态及启停。公网端口转发在 NPS 服务端管理。新安装默认不启用，不内置服务器地址或密钥；保留配置升级沿用 `/etc/config/npc` 的设置。
