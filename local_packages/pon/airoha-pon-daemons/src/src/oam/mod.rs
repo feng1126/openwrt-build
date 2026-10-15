@@ -28,7 +28,7 @@ const RECEIVE_BUFFER_LEN: usize = 2048;
 pub use self::config::OamConfig;
 
 pub fn run_agent(interface: &str, config: OamConfig, control_socket: &Path) -> io::Result<()> {
-    let source_mac = parent_interface_mac(interface)?;
+    let mut source_mac = parent_interface_mac(interface)?;
     let socket = PacketSocket::open(interface)?;
     let service_ready = parent_xpon_attribute(interface, "service_ready")?;
     publish_service_ready(service_ready.as_deref(), false);
@@ -72,6 +72,18 @@ pub fn run_agent(interface: &str, config: OamConfig, control_socket: &Path) -> i
                 continue;
             }
         };
+        // netifd may apply a cloned MAC after this agent starts. Never reply
+        // with an identity cached from an earlier PON MAC epoch.
+        let current_mac = parent_interface_mac(interface)?;
+        if current_mac != source_mac {
+            source_mac = current_mac;
+            ieee = IeeeSession::new();
+            ctc = CtcSession::new();
+            publish_service_ready(service_ready.as_deref(), false);
+            published_service_ready = false;
+            status.record_event("identity", "PON MAC changed; OAM session reset".to_owned());
+            status.update_ctc(ctc.snapshot());
+        }
         status.record_rx(pdu.code);
 
         let response = match pdu.code {
