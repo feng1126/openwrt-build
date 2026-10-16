@@ -11,6 +11,11 @@ on:
         type: string
         required: false
         default: "main"
+      source_commit:
+        description: "Optional exact source commit for compatibility modules; empty follows branch"
+        type: string
+        required: false
+        default: ""
 
 jobs:
   build:
@@ -66,6 +71,7 @@ jobs:
         shell: bash
         env:
           SOURCE_BRANCH: ${{ inputs.base_branch }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
         run: |
           source_branch="${SOURCE_BRANCH:-main}"
           git check-ref-format --branch "$source_branch"
@@ -73,6 +79,11 @@ jobs:
           echo "artifact_branch=${source_branch//\//-}" >> "$GITHUB_OUTPUT"
           mkdir -p build-logs
           git clone --depth 1 --single-branch --branch "$source_branch" https://github.com/openwrt/openwrt.git openwrt
+          if [ -n "${SOURCE_COMMIT:-}" ]; then
+            [[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || exit 1
+            git -C openwrt fetch --depth 1 origin "$SOURCE_COMMIT"
+            git -C openwrt checkout --detach "$SOURCE_COMMIT"
+          fi
           source_commit=$(git -C openwrt rev-parse HEAD)
           echo "source_commit=$source_commit" >> "$GITHUB_OUTPUT"
           {
@@ -386,8 +397,10 @@ jobs:
           fi
           # Retain exact-build modules for devices that already run this ABI.
           mkdir -p artifact/macvlan-packages
-          find openwrt/bin -type f \( -name 'kmod-macvlan*.apk' -o -name 'kmod-nft-netdev*.apk' \) \
-            -exec cp -t artifact/macvlan-packages {} +
+          if [ -d openwrt/bin ]; then
+            find openwrt/bin -type f \( -name 'kmod-macvlan*.apk' -o -name 'kmod-nft-netdev*.apk' \) \
+              -exec cp -t artifact/macvlan-packages {} +
+          fi
           find artifact -maxdepth 5 -type f | sort
 
       - name: Upload firmware artifact
