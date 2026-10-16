@@ -384,6 +384,10 @@ jobs:
           if [ -f openwrt/.config ]; then
             cp openwrt/.config artifact/openwrt.config
           fi
+          # Retain exact-build modules for devices that already run this ABI.
+          mkdir -p artifact/macvlan-packages
+          find openwrt/bin -type f \( -name 'kmod-macvlan*.apk' -o -name 'kmod-nft-netdev*.apk' \) \
+            -exec cp -t artifact/macvlan-packages {} +
           find artifact -maxdepth 5 -type f | sort
 
       - name: Upload firmware artifact
@@ -405,7 +409,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="openwrt-${ARTIFACT_BRANCH}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          mapfile -d '' files < <(find artifact/targets -type f ! -path '*/packages/*' -print0 | sort -z)
+          mapfile -d '' files < <(find artifact/targets artifact/macvlan-packages -type f ! -path '*/packages/*' -print0 | sort -z)
           if ! printf '%s\n' "${files[@]}" | grep -Eq '\.(bin|itb|img|ubi|img\.gz)$'; then
             echo "::error::No firmware image found; refusing to publish release"
             exit 1
