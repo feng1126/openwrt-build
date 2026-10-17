@@ -315,6 +315,12 @@ jobs:
           set -o pipefail
           make download -j"$(nproc)" V=s 2>&1 | tee ../build-logs/download.log
 
+      - name: Verify complete PON kernel patch series
+        shell: bash
+        run: |
+          python3 scripts/check-pon-kernel-patches.py openwrt \
+            --log build-logs/pon-kernel-patches.log
+
       - name: Save downloaded sources
         if: steps.download.outcome == 'success'
         continue-on-error: true
