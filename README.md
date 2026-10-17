@@ -231,7 +231,7 @@ main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成
 
 上游协议状态：XG-PON 和 10G/1G EPON 已测试；XGS-PON 和 10G/10G EPON 尚未测试；GPON 和 1G EPON 尚未实现。固件编译通过不代表已经完成光线路注册和业务实测。
 
-PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；未启用实验桥接卸载，因此移除原生 L2B 布局补丁。官方底版自带的相关补丁继续保留。PON 数据/控制通道、PCS/光模块 GPIO、PPE GEM/T-CONT 元数据、共享 QDMA/DMA、VLAN MTU、NPU mailbox 超时和外部 SerDes NBQ 修复保留，分别服务于光接入、数据通道正确性和驱动稳定性。
+PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；原生 L2B 布局修复已单独移植，但不启用实验桥接卸载。官方底版自带的相关补丁继续保留。PON 数据/控制通道、PCS/光模块 GPIO、PPE GEM/T-CONT 元数据、共享 QDMA/DMA、VLAN MTU、NPU mailbox 超时和外部 SerDes NBQ 修复保留，分别服务于光接入、数据通道正确性和驱动稳定性。
 
 2026-10-17 main 适配：使用上游新版 LRO、MIB 统计、BQL、skb 分片 DMA 和包含 VLAN 二层开销的 MTU 实现，移除重复补丁。重新合并 phylink/PCS 与 PON 控制、数据通道：OMCI/OAM 原始控制帧独立于以太网 LRO 接收；共享发送完成路径只对以太网私有结构访问 `txq_lock`，避免将控制接口私有数据当成以太网结构；保留 GEM/T-CONT/LLID 映射和配置去重。工作流下载内核后先以 `--fuzz=0` 验证完整内核补丁序列，再进入编译，日志为 `pon-kernel-patches.log`。此适配的实际光线路行为仍需新固件验证。
 
@@ -252,3 +252,5 @@ FullCone uses one IPv4 / IPv6 toggle in LuCI; enabling or disabling it updates b
 FullCone 补丁根据 nftables 版本自动选择：旧版本沿用原补丁，1.1.7 及更新版本使用适配全局 NAT 词法规则的补丁。构建前仍执行源码准备和关键符号检查。
 
 libnftnl 1.3.2 及更新版本的 FullCone 回调使用新增 `byteorder` 参数；脚本按库版本选择对应补丁，兼容旧库接口。
+
+2026-10-17 PonWrt 兼容性修复：移植 `8fb27e6f5c6a`，将 fraglist GRO 恢复为默认关闭、按需开启，保留普通 GRO，避免 IPv4 组播转发因 GRO 大包和 DF 检查丢弃 IPTV 数据。移植 `e4d0908bb06a`，使用 AN7581 原生 L2B 表项布局，保留硬件学习的入口键和源 MAC，修正桥接查表与 debugfs 解码；原生 L2B 暂不使用未经验证的 NPU 统计布局。不改变现有桥接卸载开关。补丁来源与 SHA256 记录在 `patches/pon/sources.json`，实际 IPTV 和桥接转发需新固件验证。

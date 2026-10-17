@@ -31,7 +31,9 @@
     "target/linux/airoha/patches-6.18/310-10-net-airoha-add-phylink-support.patch": "4bb0ba2620de30543d91eecd2d04d25fd96f67f5b1851826299c021cd0b1d207",
     "target/linux/airoha/base-files/etc/board.d/03_pon_data": null,
     "target/linux/airoha/patches-6.18/606-net-pcs-airoha-fix-an7583-port-count.patch": "ed23601dfa1b82a9a6af24e1dc606738b3b2db7dabbfe0f115d8cf4090176511",
-    "target/linux/airoha/patches-6.18/604-01-net-pcs-airoha-add-support-for-AN7583.patch": "c95fe95cadfc6eea505374aaa767a5720db4bc8f9a93cddb39f6987cc8a97fcc"
+    "target/linux/airoha/patches-6.18/604-01-net-pcs-airoha-add-support-for-AN7583.patch": "c95fe95cadfc6eea505374aaa767a5720db4bc8f9a93cddb39f6987cc8a97fcc",
+    "target/linux/airoha/patches-6.18/930-net-airoha-fix-native-l2b-entry-layout.patch": null,
+    "target/linux/airoha/patches-6.18/980-revert-fraglist-gro-by-default.patch": null
   },
   "sha256": {
     "patches/pon/001-xg040gmd-pon-board.patch": "760af7c84b46c971b6c570897f78647d08d449ddb66d152e683eb8e38f48adc2",
@@ -147,6 +149,16 @@
     "local_packages/pon/airoha-pon-debug/files/airoha-pon-debug.config": "46e0c1ddc0b0ffd79e1301cab86331350166929e950d34d54e09f375e06d33f4",
     "local_packages/pon/airoha-pon-debug/files/airoha-pon-debug": "50fb7c05ace40c7ec9196e42c22c6e2f9b939aa0b3f92c0c5fe35596b9ab4968",
     "patches/pon/overlay/target/linux/airoha/patches-6.18/606-net-pcs-airoha-fix-an7583-port-count.patch": "39e788eae21d780cc2e58bee01c7dca74d8c9c01ee25cf03bf4dbd257967fe28",
-    "patches/pon/overlay/target/linux/airoha/patches-6.18/604-01-net-pcs-airoha-add-support-for-AN7583.patch": "2f53663fd9d760a9a3b891d4d24ee3723ce18fb41ccd4f37ce7c4a4ed93e06dc"
+    "patches/pon/overlay/target/linux/airoha/patches-6.18/604-01-net-pcs-airoha-add-support-for-AN7583.patch": "2f53663fd9d760a9a3b891d4d24ee3723ce18fb41ccd4f37ce7c4a4ed93e06dc",
+    "patches/pon/overlay/target/linux/airoha/patches-6.18/930-net-airoha-fix-native-l2b-entry-layout.patch": "ae69132cd9e566d0171fb8a8f45b32ec5a0ce8fb1d5377abaace0d00c4e7c34e",
+    "patches/pon/overlay/target/linux/airoha/patches-6.18/980-revert-fraglist-gro-by-default.patch": "04a8dae00a2927379f3175252a44443a422b0d7a515c707d0f99821d65faf2b6"
+  },
+  "additional_upstream_patches": {
+    "930-net-airoha-fix-native-l2b-entry-layout.patch": {
+      "url": "https://github.com/pbs05/ponwrt/commit/e4d0908bb06a"
+    },
+    "980-revert-fraglist-gro-by-default.patch": {
+      "url": "https://github.com/pbs05/ponwrt/commit/8fb27e6f5c6a"
+    }
   }
 }
