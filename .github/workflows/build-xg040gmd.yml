@@ -248,6 +248,11 @@ jobs:
             CONFIG_PACKAGE_luci-compat \
             CONFIG_PACKAGE_luci-app-passwall \
             CONFIG_PACKAGE_mosdns \
+            CONFIG_PACKAGE_smartdns \
+            CONFIG_PACKAGE_luci-app-smartdns \
+            CONFIG_PACKAGE_luci-i18n-smartdns-zh-cn \
+            CONFIG_PACKAGE_kmod-usb-net \
+            CONFIG_PACKAGE_kmod-usb-net-asix-ax88179 \
             CONFIG_PACKAGE_luci-app-mosdns \
             CONFIG_PACKAGE_luci-i18n-mosdns-zh-cn \
             CONFIG_PACKAGE_geo2txt \
@@ -264,10 +269,6 @@ jobs:
           done
           if grep -Eq '^CONFIG_PACKAGE_(natmap|luci-app-natmap|luci-i18n-natmap-zh-cn)=(y|m)$' .config; then
             echo "::error::Original NATMap packages conflict with the enhanced NATMap packages"
-            exit 1
-          fi
-          if grep -Eq '^CONFIG_PACKAGE_(smartdns|luci-app-smartdns|luci-i18n-smartdns-zh-cn)=(y|m)$' .config; then
-            echo "::error::SmartDNS must be disabled when building the MosDNS profile"
             exit 1
           fi
           if grep -Eq '^CONFIG_PACKAGE_(sing-box|hysteria|luci-app-passwall_INCLUDE_SingBox|luci-app-passwall_INCLUDE_Hysteria)=(y|m)$' .config; then
@@ -404,7 +405,7 @@ jobs:
           # Retain exact-build modules for devices that already run this ABI.
           mkdir -p artifact/macvlan-packages
           if [ -d openwrt/bin ]; then
-            find openwrt/bin -type f \( -name 'kmod-macvlan*.apk' -o -name 'kmod-nft-netdev*.apk' \) \
+            find openwrt/bin -type f \( -name 'kmod-macvlan*.apk' -o -name 'kmod-nft-netdev*.apk' -o -name 'kmod-usb-net*.apk' -o -name 'kmod-mii*.apk' -o -name 'kmod-libphy*.apk' \) \
               -exec cp -t artifact/macvlan-packages {} +
           fi
           find artifact -maxdepth 5 -type f | sort

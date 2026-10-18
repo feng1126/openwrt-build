@@ -78,7 +78,11 @@ DNS bypass controls, automatic node migrations or rule-update overrides.
 
 ## MosDNS 与 DNS 默认配置
 
-MosDNS 5.3.4-r14, LuCI 1.7.14 and its Chinese translation replace SmartDNS.
+MosDNS 5.3.4-r14, LuCI 1.7.14 and its Chinese translation remain the default DNS stack.
+SmartDNS, luci-app-smartdns and its Chinese translation are also included, disabled
+by default on fresh installations to avoid competing DNS services.
+The firmware includes the ASIX AX88179 USB Ethernet driver; matching USB networking
+module APKs and PHY/MII dependencies are attached to each release.
 The unchanged package sources are pinned in `local_packages/mosdns-upstream.json`.
 Fresh installations enable MosDNS on port 6053 with IPv4 preference for domestic
 and foreign domains, while retaining IPv6-only DNS answers. Its 4096-entry cache,
@@ -211,8 +215,7 @@ full database. `99-zzzz-xg040gmd-geodata` only undoes the previous custom update
 policy when its migration marker exists; fresh installations use upstream defaults.
 
 The workflow fixes the legacy SmartDNS LuCI array-to-boolean status bug after
-feeds installation. SmartDNS remains disabled in the MosDNS firmware profile;
-the source fix also applies if SmartDNS is selected in a future profile.
+feeds installation. The fix applies to the included SmartDNS LuCI interface.
 
 
 ## ZeroTier 局域网访问

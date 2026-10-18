@@ -13,6 +13,12 @@ fi
 uci -q get mosdns.config >/dev/null || exit 1
 uci -q get passwall.@global[0] >/dev/null || exit 1
 
+# Ship SmartDNS as an optional service; preserve the MosDNS default.
+if uci -q get smartdns.@smartdns[0] >/dev/null; then
+    uci set smartdns.@smartdns[0].enabled=0
+    uci commit smartdns
+fi
+
 uci set mosdns.config.enabled=1
 uci set mosdns.config.listen_port=6053
 uci set mosdns.config.redirect=1
