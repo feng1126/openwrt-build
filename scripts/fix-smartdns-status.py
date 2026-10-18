@@ -6,9 +6,15 @@ from pathlib import Path
 
 
 def fix(source):
-    if not re.search(r'function\s+smartdnsServiceStatus\s*\([^)]*\)\s*\{\s*return\s+Promise\.all\s*\(', source):
-        return source
-    return re.sub(r'smartdnsRenderStatus\(\s*res\s*\)', 'smartdnsRenderStatus(res[0] === true)', source)
+    # Normalize at the renderer boundary, including already-patched callers.
+    signature = r'(function\s+smartdnsRenderStatus\s*\(isRunning\)\s*\{)'
+    if not re.search(signature, source):
+        raise ValueError('Unrecognized SmartDNS status renderer')
+    marker = '// Normalize service RPC status: arrays are truthy even for [false].'
+    if marker not in source:
+        source = re.sub(signature, lambda m: m[0] + '\n\t' + marker +
+                        '\n\tisRunning = (Array.isArray(isRunning) ? isRunning[0] : isRunning) === true;', source, count=1)
+    return source
 
 
 def main():
@@ -23,10 +29,8 @@ def main():
         if updated != source:
             path.write_text(updated)
             print('Fixed:', path)
-        elif re.search(r'smartdnsRenderStatus\(\s*res\s*\)', source) and 'Promise.all([getServiceStatus()])' in source:
-            raise SystemExit('Unrecognized SmartDNS status code: ' + str(path))
         else:
-            print('No legacy array-status call:', path)
+            print('Status normalization already installed:', path)
 
 if __name__ == '__main__':
     main()
