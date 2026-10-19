@@ -418,11 +418,11 @@ validate:
 	if (!en->bob_a0_valid)
 		dev_warn(
 			dev,
-			"BOB A0 calibration area is empty; XE/XES will use erased/default register codes\n");
+			"BOB A0 calibration area is empty; XE/XES will keep MD32 analog defaults\n");
 	if (!en->bob_a2_valid)
 		dev_warn(
 			dev,
-			"BOB A2 calibration area is empty; XG/XGS will use erased/default register codes\n");
+			"BOB A2 calibration area is empty; XG/XGS will keep MD32 analog defaults\n");
 
 	en7572_apply_tx_ddmi_fallback(dev, en);
 
@@ -636,6 +636,7 @@ static int en7572_prepare(struct airoha_pon_frontend *frontend,
                           enum airoha_pon_frontend_mode mode)
 {
 	struct en7572 *en = airoha_pon_frontend_priv(frontend);
+	bool calibrated;
 	int base;
 	u32 tia;
 	int ret;
@@ -643,16 +644,17 @@ static int en7572_prepare(struct airoha_pon_frontend *frontend,
 	base = en7572_bob_base(mode);
 	if (base < 0)
 		return base;
+	calibrated = base == EN7572_BOB_A0_BASE ? en->bob_a0_valid :
+						      en->bob_a2_valid;
 
 	/*
-	 * AdaptivePon() truncates erased bytes to each register's field width.
-	 * PON MAC retains control of burst timing with these default codes.
+	 * An erased BOB table contains 0xff, which would program extreme
+	 * modulation and bias currents. Let MD32 retain its analog defaults.
 	 */
-	if ((base == EN7572_BOB_A0_BASE && !en->bob_a0_valid) ||
-	    (base == EN7572_BOB_A2_BASE && !en->bob_a2_valid))
+	if (!calibrated)
 		dev_warn(
 			&en->program->dev,
-			"preparing %s with an empty BOB table using stock-compatible register codes\n",
+			"preparing %s with an empty BOB table; keeping MD32 analog defaults\n",
 			en7572_mode_name(mode));
 
 	mutex_lock(&en->lock);
@@ -663,6 +665,11 @@ static int en7572_prepare(struct airoha_pon_frontend *frontend,
 	                         EN7572_BEN_MODE_OFF);
 	if (ret)
 		goto out_unlock;
+	if (!calibrated) {
+		en->prepared_mode = mode;
+		en->prepared = true;
+		goto out_unlock;
+	}
 
 	ret = en7572_update_bits(
 		en, EN7572_DCL_CTRL_2, GENMASK(27, 16),

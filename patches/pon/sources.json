@@ -91,7 +91,7 @@
     "local_packages/pon/LICENSES/userspace/Apache-2.0": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
     "local_packages/pon/airoha-pon-frontends/README.md": "dc06da0fdc8db9870a62787f7c8e7933a9be5683f81989701e4639a9ad516741",
     "local_packages/pon/airoha-pon-frontends/Makefile": "d6f1e77efa3c96edf0d7b4ab4846f7158930ae91b7d41af91a66ce9d2ce1db5e",
-    "local_packages/pon/airoha-pon-frontends/src/airoha-en7572.c": "d185b42077d5bee7bb375b44db16065cee60ec60b0319bbf2b89349ba49bf553",
+    "local_packages/pon/airoha-pon-frontends/src/airoha-en7572.c": "7690038b5b970968dca64c71ddb1ae91c7868f98c22fef84859923a1283eb22a",
     "local_packages/pon/airoha-pon-frontends/src/airoha-paged-bosa-gn28l95.c": "bfa95787b6b4b8173d85f7edd2339c1f61f289f7f3e047b417bb741d930d8559",
     "local_packages/pon/airoha-pon-frontends/src/airoha-paged-bosa.h": "b53ec5d4fdc75d9341e54137c122c0d9cfd331edf2d1999477a5401ded2da454",
     "local_packages/pon/airoha-pon-frontends/src/airoha-pon-frontend.h": "4935d720fd04204c54f2086e28052dfaf317113cde5ec5d649a1825624d6f544",
