@@ -173,6 +173,12 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Fix ZeroTier persistent directory startup
+        run: |
+          set -euo pipefail
+          python3 tests/test-zerotier-config-path.py
+          python3 scripts/fix-zerotier-config-path.py openwrt 2>&1 | tee build-logs/zerotier-startup-fix.log
+
       - name: Fix SmartDNS LuCI service status
         run: |
           set -o pipefail

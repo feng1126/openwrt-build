@@ -224,6 +224,8 @@ ZeroTier 页面提供“允许局域网访问 ZeroTier”开关，控制 `lan �
 
 当 ZeroTier 使用 `/etc/` 下的自定义配置目录时，默认脚本会创建该目录并将其加入 `/etc/sysupgrade.conf`，保留已有身份文件。ZeroTier 的启用状态保持用户原设置。
 
+构建还会修复 ZeroTier 后端启动脚本：每次启动时，如果 `/etc/` 下的持久目录缺失，自动创建并设为 `0700`，再按原配置复制或链接。即使首次启动后目录被删除或用户重新指定 `/etc/zerotier`，也不会因目录不存在而直接退出。已有目录内容、节点密钥和网络配置沿用原启动逻辑；外部磁盘目录缺失仍会报错，不在未挂载时自动创建替代目录。构建日志保存为 `zerotier-startup-fix.log`。
+
 ## Nokia XG-040G-MD PON 移植
 
 main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成 PonWrt 的 PON 内核接口、PCS 和 Nokia UBI 板级适配，以及两个 PON feed 的软件包源码。源码提交和文件校验值见 `patches/pon/sources.json`。工作流跟随官方 OpenWrt 所选分支的最新提交，默认 main；`sources.json` 中的 OpenWrt 提交仅记录 PON 移植参考底版。内核版本、覆盖文件和补丁检查继续保留，上游变化不兼容时需要重新适配。
