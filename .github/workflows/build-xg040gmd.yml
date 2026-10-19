@@ -127,6 +127,12 @@ jobs:
           python3 scripts/apply-pon.py openwrt 2>&1 | tee build-logs/pon-setup.log
           cp patches/pon/sources.json build-logs/pon-sources.json
 
+      - name: Install uhttpd ucode compatibility patch
+        run: |
+          mkdir -p openwrt/package/network/services/uhttpd/patches
+          cp patches/uhttpd/*.patch openwrt/package/network/services/uhttpd/patches/
+          python3 tests/test-uhttpd-ucode-status.py
+
       - name: Copy local custom packages
         run: |
           cd openwrt

@@ -1,0 +1,13 @@
+--- a/ucode.c
++++ b/ucode.c
+@@ -307,6 +307,10 @@
+ 	case ERROR_RUNTIME:
+ 		fprintf(stderr, "Error: Runtime error while executing ucode handler\n");
+ 		exit(2);
++
++	default:
++		fprintf(stderr, "Error: Unexpected ucode handler status %d\n", status);
++		exit(2);
+ 	}
+ 
+ 	v = ucv_object_get(uc_vm_scope_get(vm), UH_UCODE_CB, NULL);
