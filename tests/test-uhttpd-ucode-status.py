@@ -34,3 +34,19 @@ return 0;
         if extra:
             assert subprocess.run([str(root / 'test'), '2'], stderr=subprocess.DEVNULL).returncode == 2
 print('PASS: old/new enums compile; unknown and break statuses fail safely')
+
+# A future upstream fix must retire our fallback instead of causing a patch failure.
+import runpy
+helper = runpy.run_path(str(patch.parents[2] / 'scripts/fix-uhttpd-ucode-status.py'))
+old_source = 'switch (status) {\ncase STATUS_OK: break;\n' + context
+new_source = 'switch (status) {\ncase STATUS_OK:\ndefault: break;\n}\n'
+assert helper['needs_patch'](old_source)
+assert not helper['needs_patch'](new_source)
+with tempfile.TemporaryDirectory() as directory:
+    tree = Path(directory)
+    helper['install'](tree, old_source)
+    output = tree / 'package/network/services/uhttpd/patches' / patch.name
+    assert output.exists()
+    helper['install'](tree, new_source)
+    assert not output.exists()
+print('PASS: upstream fix detection and stale patch removal')

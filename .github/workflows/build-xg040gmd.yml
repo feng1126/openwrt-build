@@ -129,8 +129,7 @@ jobs:
 
       - name: Install uhttpd ucode compatibility patch
         run: |
-          mkdir -p openwrt/package/network/services/uhttpd/patches
-          cp patches/uhttpd/*.patch openwrt/package/network/services/uhttpd/patches/
+          python3 scripts/fix-uhttpd-ucode-status.py openwrt
           python3 tests/test-uhttpd-ucode-status.py
 
       - name: Copy local custom packages
