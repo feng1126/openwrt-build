@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/stevenjoezhang/luci-app-adguardhome",
+  "tag": "v1.21",
+  "commit": "15d42a57f72f2e5bbe6b0dd55febc7eea03af740",
+  "local_changes": [
+    "Remove GitHub star prompt",
+    "Fix executable detection with pgrep -f",
+    "Support saving YAML across tmpfs and USB filesystem",
+    "Require mounted USB storage before service start",
+    "Avoid empty backup selections",
+    "Use hard-drive paths and official adguardhome core dependency",
+    "Disable duplicate lowercase core service via uci-defaults"
+  ],
+  "contains_private_runtime_config": false
+}

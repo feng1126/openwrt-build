@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# The core package also ships a lowercase service. Use only the LuCI-managed
+# service to avoid two processes opening the same database and DNS sockets.
+if [ -x /etc/init.d/adguardhome ]; then
+	/etc/init.d/adguardhome stop
+	/etc/init.d/adguardhome disable
+fi
+
+uci -q batch <<'EOF'
+delete ucitrack.@AdGuardHome[-1]
+add ucitrack AdGuardHome
+set ucitrack.@AdGuardHome[-1].init=AdGuardHome
+commit ucitrack
+EOF
+
+/etc/init.d/AdGuardHome enable
+rm -f /tmp/luci-indexcache
+exit 0

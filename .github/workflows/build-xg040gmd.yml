@@ -144,6 +144,9 @@ jobs:
           cp -a ../local_packages/natmapt package/custom/natmapt
           cp -a ../local_packages/npc package/custom/npc
           cp -a ../local_packages/luci-app-nps package/custom/luci-app-nps
+          cp -a ../local_packages/luci-app-adguardhome package/custom/luci-app-adguardhome
+          cp ../local_packages/adguardhome-upstream.json ../build-logs/adguardhome-upstream.json
+          python3 ../tests/test-adguardhome-service.py
           test ! -e package/custom/luci-app-socat/root/etc/config/socat
           test -s package/custom/luci-app-socat/root/etc/uci-defaults/luci-app-socat
           cp -a ../local_packages/openwrt-passwall/luci-app-passwall package/custom/luci-app-passwall
@@ -172,6 +175,8 @@ jobs:
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          # Prefer the vendored enhanced UI over the official minimal UI.
+          rm -f package/feeds/luci/luci-app-adguardhome
 
       - name: Fix ZeroTier persistent directory startup
         run: |
@@ -243,6 +248,9 @@ jobs:
             CONFIG_PACKAGE_luci-app-socat \
             CONFIG_PACKAGE_npc \
             CONFIG_PACKAGE_luci-app-nps \
+            CONFIG_PACKAGE_adguardhome \
+            CONFIG_PACKAGE_luci-app-adguardhome \
+            CONFIG_PACKAGE_luci-i18n-adguardhome-zh-cn \
             CONFIG_PACKAGE_luci-app-zerotier \
             CONFIG_PACKAGE_luci-i18n-zerotier-zh-cn \
             CONFIG_PACKAGE_zerotier \

@@ -76,6 +76,22 @@ The GeoIP package is locally changed to the pinned China/private-only asset;
 other component choices use upstream defaults. There are no custom SOCKS forwarding,
 DNS bypass controls, automatic node migrations or rule-update overrides.
 
+## AdGuard Home 增强界面
+
+固件包含官方 `adguardhome` 核心、固定 v1.21 的
+[stevenjoezhang 增强版 LuCI](https://github.com/stevenjoezhang/luci-app-adguardhome)
+和中文语言包，来源记录在 `local_packages/adguardhome-upstream.json`。
+界面保留运行日志、YAML 编辑、路径设置和通过 firewall4/nftables 管理的 DNS
+重定向选项，已移除 GitHub 关注提示，并修正进程检测和跨文件系统保存 YAML。
+
+默认工作目录为 `/mnt/sda1/AdGuardHome`，配置文件为该目录下的
+`adguardhome.yaml`，运行日志为 `runtime.log`。硬盘未挂载时跳过启动，避免把数据
+写入路由器闪存；硬盘挂载后可在“服务 → AdGuard Home”启用或重启。
+已有硬盘配置继续使用；没有配置时通过 `http://路由器地址:3000` 完成初始化。
+默认不接管 DNS，也不内置账号、密码、设备 UUID 或当前硬盘的 swap 配置。
+启用重定向前需要确认监听地址、IPv6 和 Passwall/MosDNS 的 DNS 链路。
+只启用增强界面管理的 `AdGuardHome` 服务，禁用核心附带的同名小写服务，避免重复启动。
+
 ## MosDNS 与 DNS 默认配置
 
 MosDNS 5.3.4-r14, LuCI 1.7.14 and its Chinese translation remain the default DNS stack.
