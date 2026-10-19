@@ -76,6 +76,11 @@ The GeoIP package is locally changed to the pinned China/private-only asset;
 other component choices use upstream defaults. There are no custom SOCKS forwarding,
 DNS bypass controls, automatic node migrations or rule-update overrides.
 
+PassWall 的 DNS 页面增加“其他直连 DNS”列表，适用于 ChinaDNS-NG + UDP
+直连解析。多个服务器一起交给 ChinaDNS-NG 查询，Xray 仍只使用主 DNS。
+例如主 DNS 为 `211.137.58.20`，额外添加 `211.137.64.163`、`119.29.29.29`。
+此功能不会覆盖现有 DNS 配置，新增列表默认为空。
+
 ## AdGuard Home 增强界面
 
 固件包含官方 `adguardhome` 核心、固定 v1.21 的

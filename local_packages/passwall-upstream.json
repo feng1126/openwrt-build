@@ -1,7 +1,10 @@
 {
   "openwrt-passwall": {
     "repository": "https://github.com/Openwrt-Passwall/openwrt-passwall.git",
-    "commit": "eca13dc2330e39745001cf2cbe0513bcc8a10b4f"
+    "commit": "eca13dc2330e39745001cf2cbe0513bcc8a10b4f",
+    "local_changes": [
+      "Support optional direct_dns_extra UDP resolvers for ChinaDNS-NG; keep Xray on the primary resolver."
+    ]
   },
   "openwrt-passwall-packages": {
     "repository": "https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git",
