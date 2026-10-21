@@ -1,0 +1,36 @@
+#!/bin/sh
+# Keep retained configurations usable after MosDNS leaves the image.
+set -eu
+
+case "$(cat /tmp/sysinfo/board_name)" in
+    nokia,xg-040g-md|nokia,xg-040g-md-ubi) ;;
+    *) exit 0 ;;
+esac
+
+if uci -q get passwall.@global[0] >/dev/null; then
+    changed=0
+    if [ "$(uci -q get passwall.@global[0].direct_dns || true)" = '127.0.0.1:6053' ]; then
+        uci set passwall.@global[0].direct_dns='223.5.5.5'
+        changed=1
+    fi
+    if [ "$(uci -q get passwall.@global[0].remote_dns || true)" = '127.0.0.1:6053' ]; then
+        uci set passwall.@global[0].remote_dns='1.1.1.1'
+        changed=1
+    fi
+    [ "$changed" -eq 0 ] || uci commit passwall
+fi
+
+if uci -q get dhcp.@dnsmasq[0] >/dev/null; then
+    servers="$(uci -q get dhcp.@dnsmasq[0].server || true)"
+    case " $servers " in
+        *' 127.0.0.1#6053 '*)
+            uci -q del_list dhcp.@dnsmasq[0].server='127.0.0.1#6053' || true
+            if [ -z "$(uci -q get dhcp.@dnsmasq[0].server || true)" ]; then
+                uci add_list dhcp.@dnsmasq[0].server='223.5.5.5'
+            fi
+            uci commit dhcp
+            ;;
+    esac
+fi
+
+exit 0

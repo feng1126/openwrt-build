@@ -1,6 +1,6 @@
 # Nokia XG-040G-MD OpenWrt 固件编译
 
-通过 GitHub Actions 为 Nokia/Bell XG-040G-MD 编译 OpenWrt，基于官方 OpenWrt，集成 PON 适配、LuCI 中文界面、Passwall、MosDNS、NATMap 和内存优化配置。
+通过 GitHub Actions 为 Nokia/Bell XG-040G-MD 编译 OpenWrt，基于官方 OpenWrt，集成 PON 适配、LuCI 中文界面、Passwall、AdGuardHome、NATMap 和内存优化配置。
 
 | 项目 | 当前配置 |
 | --- | --- |
@@ -94,33 +94,15 @@ PassWall 的 DNS 页面增加“其他直连 DNS”列表，适用于 ChinaDNS-N
 写入路由器闪存；硬盘挂载后可在“服务 → AdGuard Home”启用或重启。
 已有硬盘配置继续使用；没有配置时通过 `http://路由器地址:3000` 完成初始化。
 默认不接管 DNS，也不内置账号、密码、设备 UUID 或当前硬盘的 swap 配置。
-启用重定向前需要确认监听地址、IPv6 和 Passwall/MosDNS 的 DNS 链路。
+启用重定向前需要确认监听地址、IPv6 和 Passwall 的 DNS 链路。
 只启用增强界面管理的 `AdGuardHome` 服务，禁用核心附带的同名小写服务，避免重复启动。
 
-## MosDNS 与 DNS 默认配置
+## DNS 软件与升级兼容
 
-MosDNS 5.3.4-r14, LuCI 1.7.14 and its Chinese translation remain the default DNS stack.
-SmartDNS, luci-app-smartdns and its Chinese translation are also included, disabled
-by default on fresh installations to avoid competing DNS services.
+固件包含 AdGuardHome、Passwall 和可选的 SmartDNS，不再编译 MosDNS、LuCI 页面及其专用 geo2txt 工具。首次安装不预设 DNS 劫持；按实际网络配置 AdGuardHome 或 Passwall。保留配置升级时，如 DNS 仍指向已移除的 127.0.0.1:6053，首次启动脚本会将 Passwall 直连 DNS 改为 223.5.5.5、远程 DNS 改为 1.1.1.1，并将 dnsmasq 的该上游替换为 223.5.5.5。其他现有 DNS 设置不变。
+
 The firmware includes the ASIX AX88179 USB Ethernet driver; matching USB networking
 module APKs and PHY/MII dependencies are attached to each release.
-The unchanged package sources are pinned in `local_packages/mosdns-upstream.json`.
-Fresh installations enable MosDNS on port 6053 with IPv4 preference for domestic
-and foreign domains, while retaining IPv6-only DNS answers. Its 4096-entry cache,
-prefetch, two concurrent upstreams and 120-second connection reuse are enabled.
-Domestic upstreams use AliDNS/Tencent DoH; foreign upstreams use Cloudflare/Google
-DoH. Configure working proxy nodes before relying on blocked foreign upstreams.
-
-Passwall uses its upstream ChinaDNS-NG integration for domain/IP policy sets;
-both direct and remote DNS point to MosDNS, with UDP for local DNS transport.
-Only Passwall performs client DNS interception. MosDNS's LuCI DNS-forwarding
-option is enabled; dnsmasq caching is disabled by that upstream option, leaving
-DNS caching to MosDNS. No proxy credentials, nodes, or WAN credentials are added.
-
-`files/etc/uci-defaults/99-zzz-xg040gmd-dns` installs these defaults only on a
-fresh install. Retained-config upgrades and repeated initialization preserve
-existing DNS choices. This profile keeps the tested Passwall classification
-path; it does not implement a new MosDNS-only firewall-set integration.
 
 Simplified Chinese is enabled with `CONFIG_LUCI_LANG_zh_Hans=y`. LuCI translation
 packages are hidden Kconfig options driven by this language setting, so selecting
@@ -228,12 +210,8 @@ connectivity, not bandwidth. See [patch sources and verification](patches/fullco
 ## Geo 数据体积与更新
 
 Firmware embeds the pinned `geoip-only-cn-private.dat` asset (about 134 KiB)
-to reduce image size. GeoSite remains complete. Update settings use upstream
-defaults: MosDNS automatic updates are off, its manual GeoIP update uses the slim
-asset, and Passwall's GeoIP update URL uses the full asset. Both services share
-`/usr/share/v2ray/`. Other country GeoIP tags require downloading and loading the
-full database. `99-zzzz-xg040gmd-geodata` only undoes the previous custom update
-policy when its migration marker exists; fresh installations use upstream defaults.
+to reduce image size. GeoSite remains complete. Passwall uses its upstream GeoIP update settings; other country tags require the
+full GeoIP database. The former MosDNS update migration is no longer included.
 
 The workflow fixes the legacy SmartDNS LuCI array-to-boolean status bug after
 feeds installation. The fix applies to the included SmartDNS LuCI interface.
