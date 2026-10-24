@@ -6,6 +6,7 @@ local fs=require"nixio.fs"
 local uci=require"luci.model.uci".cursor()
 local configpath=uci:get("AdGuardHome","AdGuardHome","configpath") or "/etc/AdGuardHome.yaml"
 local binpath=uci:get("AdGuardHome","AdGuardHome","binpath") or "/usr/bin/AdGuardHome/AdGuardHome"
+local manual_gfw_update = false
 httpport=uci:get("AdGuardHome","AdGuardHome","httpport") or "3000"
 m = Map("AdGuardHome", "AdGuard Home")
 m.description = translate("A powerful LuCI interface for managing AdGuard Home - a DNS-based ad and tracker blocker that protects all devices on your network")
@@ -278,68 +279,71 @@ s:tab("crontab", translate("Crontab Settings"))
 
 o = s:taboption("crontab", MultiValue, "crontab", translate("Crontab task"),translate("Please change time and args in crontab"))
 o:value("autohost",translate("Auto update ipv6 hosts and restart AdGuardHome"))
-o:value("autogfw",translate("Auto update gfwlist and restart AdGuardHome"))
 o:value("autogfwipset",translate("Auto update ipset list and restart AdGuardHome"))
 o.widget = "checkbox"
 o.default = nil
 o.optional = false
 
 ---- GFWList Settings ----
-s:tab("gfwlist", translate("GFWList Settings"))
+s:tab("gfwlist", "GFW DNS 分流")
 
--- gfwlist
-local a
-if fs.access(configpath) then
-a=luci.sys.call("grep -m 1 -q programadd "..configpath)
-else
-a=1
+o = s:taboption("gfwlist", Flag, "gfw_enabled", "启用 GFW DNS 分流",
+    "启用后默认走国内 DNS，GFW 域名走国外 DNS；.lan 仍使用本地 dnsmasq。")
+o.default = "0"
+o.rmempty = false
+
+o = s:taboption("gfwlist", Button, "gfw_update_now", "手动更新 GFW 列表",
+    "先保存本页新填写的 DNS 和下载地址，再下载并转换规则。")
+o.inputtitle = "立即下载并转换"
+o.inputstyle = "apply"
+o:depends("gfw_enabled", "1")
+o.write = function()
+    manual_gfw_update = true
 end
-if (a==0) then
-a="Added"
-else
-a="Not added"
+
+o = s:taboption("gfwlist", DynamicList, "gfw_domestic_dns", "国内 DNS 上游",
+    "每行一个，可填写 IP、IP:端口或 DoH/DoT 地址；支持多个。添加后点“保存并应用”，或直接点上方“立即下载并转换”。")
+o:value("223.5.5.5")
+o:value("119.29.29.29")
+o:depends("gfw_enabled", "1")
+
+o = s:taboption("gfwlist", DynamicList, "gfw_foreign_dns", "GFW 域名 DNS 上游",
+    "每行一个，可填写 IP、IP:端口或 DoH/DoT 地址；支持多个。GFW 模式启用时，请在这里修改上游；AdGuard Home 原生页面的上游列表会被规则文件覆盖。")
+o:value("https://dns.google/dns-query")
+o:value("https://cloudflare-dns.com/dns-query")
+o:depends("gfw_enabled", "1")
+
+o = s:taboption("gfwlist", Flag, "gfw_auto_update", "自动更新并转换 GFW 列表",
+    "每周日 03:30 更新一次；也可以随时使用上方的手动更新按钮。下载和转换在内存中完成，仅在规则变化时写入磁盘并重启 AdGuard Home。")
+o.default = "0"
+o.rmempty = false
+o:depends("gfw_enabled", "1")
+
+o = s:taboption("gfwlist", DynamicList, "gfw_download_urls", "GFW 列表下载地址",
+    "按从上到下的顺序尝试：第一条为首选，其余为备用；可添加、删除或调整顺序。")
+o:value("https://gcore.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt")
+o:value("https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt")
+o:value("https://fastly.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt")
+o:depends("gfw_enabled", "1")
+
+o = s:taboption("gfwlist", Flag, "gfw_use_backup", "首选失败时尝试备用地址")
+o.default = "1"
+o.rmempty = false
+o:depends("gfw_enabled", "1")
+
+o = s:taboption("gfwlist", DummyValue, "gfw_download_status", "最近成功使用的下载地址")
+o.cfgvalue = function()
+    local workdir = uci:get("AdGuardHome", "AdGuardHome", "workdir") or "/mnt/sda1/AdGuardHome"
+    return fs.readfile("/tmp/adguardhome-gfw-download-status") or fs.readfile(workdir .. "/gfw-download-status.txt") or "本次启动后尚未更新"
 end
-o=s:taboption("gfwlist", Button,"gfwadd",translate("Add gfwlist"),translate(a))
-o.optional = false
-o.inputtitle=translate("Add")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfw2adg.sh 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
+o:depends("gfw_enabled", "1")
+
+function m.on_after_save()
+    -- A plain LuCI Save calls on_after_save but does not call on_after_commit.
+    -- Commit the new upstream list before regenerating its on-disk rule file.
+    m.uci:commit("AdGuardHome")
+    local mode = manual_gfw_update and "update" or "sync"
+    luci.sys.call("/usr/share/AdGuardHome/update-gfw-upstreams.sh " .. mode .. " >/tmp/adguardhome-gfw-update.log 2>&1")
 end
-o=s:taboption("gfwlist", Button,"gfwdel",translate("Del gfwlist"),translate(a))
-o.optional = false
-o.inputtitle=translate("Del")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfw2adg.sh del 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-if fs.access(configpath) then
-a=luci.sys.call("grep -m 1 -q ipset.txt "..configpath)
-else
-a=1
-end
-if (a==0) then
-a="Added"
-else
-a="Not added"
-end
-o=s:taboption("gfwlist", Button,"gfwipsetadd",translate("Add gfwlist").." "..translate("(ipset only)"),translate(a).." "..translate("will set to name gfwlist"))
-o.optional = false
-o.inputtitle=translate("Add")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfwipset2adg.sh 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-o=s:taboption("gfwlist", Button,"gfwipsetdel",translate("Del gfwlist").." "..translate("(ipset only)"),translate(a))
-o.optional = false
-o.inputtitle=translate("Del")
-o.write=function()
-	luci.sys.exec("sh /usr/share/AdGuardHome/gfwipset2adg.sh del 2>&1")
-	luci.http.redirect(luci.dispatcher.build_url("admin","services","AdGuardHome"))
-end
-o = s:taboption("gfwlist", Value, "gfwupstream", translate("Gfwlist upstream dns server"), translate("Gfwlist domain upstream dns service")..translate(a))
-o.default     = "tcp://208.67.220.220:5353"
-o.datatype    = "string"
-o.optional = false
 
 return m
