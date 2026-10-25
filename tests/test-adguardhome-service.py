@@ -19,15 +19,27 @@ class AdGuardHomeServiceTest(unittest.TestCase):
             return subprocess.run(['sh', '-c', '. "$1"\n' + body, 'test', str(path)],
                                   text=True, capture_output=True, check=True).stdout
 
-    def test_missing_disk_stops_before_loading_or_creating_config(self):
+    def test_missing_selected_disk_stops_before_creating_config(self):
         result = self.run_shell('''
 grep() { return 1; }
 logger() { echo "storage unavailable"; }
-config_load() { echo "UNEXPECTED_CONFIG_LOAD"; }
+config_load() { :; }
+config_get() { eval "$1=/mnt/sda1/AdGuardHome"; }
 if start_service; then exit 1; fi
 ''')
         self.assertIn('storage unavailable', result)
-        self.assertNotIn('UNEXPECTED_CONFIG_LOAD', result)
+
+    def test_overlay_directory_does_not_require_usb_mount(self):
+        result = self.run_shell('''
+grep() { case "$*" in *'/proc/mounts'*) echo UNEXPECTED_MOUNT_CHECK;; esac; return 1; }
+config_load() { :; }
+config_get() { eval "$1=/overlay/AdGuardHome"; }
+config_get_bool() { eval "$1=0"; }
+update_crontab() { :; }
+_do_redirect() { :; }
+start_service
+''')
+        self.assertNotIn('UNEXPECTED_MOUNT_CHECK', result)
 
     def test_redirect_uses_fw4_for_both_ip_families_and_dns_protocols(self):
         result = self.run_shell('''

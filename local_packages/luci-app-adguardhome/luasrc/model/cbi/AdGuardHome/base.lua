@@ -134,36 +134,18 @@ o.default     = ""
 o.description=translate("Reduce executable size, but may have compatibility issues after compression")
 o.rmempty = true
 
--- config path
-o = s:taboption("core", Value, "configpath", translate("Config path"))
-o.default     = "/etc/AdGuardHome.yaml"
-o.datatype    = "string"
-o.optional = false
-o.rmempty=false
-o.validate=function(self, value)
-if value==nil then return nil end
-if fs.stat(value,"type")=="dir" then
-	fs.rmdir(value)
-end
-if fs.stat(value,"type")=="dir" then
-	if m.message then
-	m.message =m.message.."\nerror!config path is a dir"
-	else
-	m.message ="error!config path is a dir"
-	end
-	return nil
-end
-return value
-end
-
 -- work dir
-o = s:taboption("core", Value, "workdir", translate("Work dir"), translate("AdGuardHome work dir will store query logs, database and other files"))
-o.default     = "/usr/bin/AdGuardHome"
+o = s:taboption("core", Value, "workdir", translate("Work dir"), translate("Enter the full directory path. The configuration file is stored in this directory."))
+o.default     = "/mnt/sda1/AdGuardHome"
 o.datatype    = "string"
 o.optional = false
 o.rmempty=false
 o.validate=function(self, value)
-if value=="" then return nil end
+if not value or not value:match("^/[A-Za-z0-9_./-]+$") or value:find("..", 1, true) or value:find("//", 1, true) then
+	return nil, translate("Enter an absolute directory path without spaces or '..'.")
+end
+value = value:gsub("/+$", "")
+if value == "" then return nil end
 if fs.stat(value,"type")=="reg" then
 	if m.message then
 	m.message =m.message.."\nerror!work dir is a file"
@@ -172,11 +154,38 @@ if fs.stat(value,"type")=="reg" then
 	end
 	return nil
 end
-if string.sub(value, -1)=="/" then
-	return string.sub(value, 1, -2)
-else
-	return value
+local mount = value:match("^(/mnt/[^/]+)")
+if mount and not (fs.readfile("/proc/mounts") or ""):find(" " .. mount .. " ", 1, true) then
+	return nil, translate("The selected storage device is not mounted.")
 end
+return value
+end
+o.write=function(self, section, value)
+	local olddir = uci:get("AdGuardHome", section, "workdir") or ""
+	if olddir ~= value then
+		local oldconfig = uci:get("AdGuardHome", section, "configpath") or (olddir .. "/adguardhome.yaml")
+		local newconfig = value .. "/adguardhome.yaml"
+		if not fs.mkdirr(value) then
+			error("Cannot create AdGuard Home work directory")
+		end
+		if not fs.access(newconfig) and fs.access(oldconfig) then
+			local contents = assert(fs.readfile(oldconfig), "Cannot read AdGuard Home configuration")
+			local oldrules_pattern = (olddir .. "/upstreams-gfw.txt"):gsub("([^%w])", "%%%1")
+			contents = contents:gsub(oldrules_pattern, value .. "/upstreams-gfw.txt")
+			assert(fs.writefile(newconfig, contents), "Cannot copy AdGuard Home configuration")
+		end
+		local oldrules = olddir .. "/upstreams-gfw.txt"
+		local newrules = value .. "/upstreams-gfw.txt"
+		if not fs.access(newrules) and fs.access(oldrules) then
+			assert(fs.writefile(newrules, fs.readfile(oldrules)), "Cannot copy DNS upstream list")
+		end
+		self.map.uci:set("AdGuardHome", section, "configpath", newconfig)
+		local logfile = uci:get("AdGuardHome", section, "logfile")
+		if logfile == olddir .. "/runtime.log" then
+			self.map.uci:set("AdGuardHome", section, "logfile", value .. "/runtime.log")
+		end
+	end
+	Value.write(self, section, value)
 end
 
 -- log file

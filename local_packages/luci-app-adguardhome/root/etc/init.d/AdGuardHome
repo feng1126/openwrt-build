@@ -361,9 +361,19 @@ _add_upprotect_file()
 }
 
 start_service() {
-	grep -q " /mnt/sda1 " /proc/mounts || { logger -t AdGuardHome "USB storage is not mounted; start skipped"; return 1; }
 	# Reading config
 	config_load "${CONFIGURATION}"
+	local selected_workdir selected_mount
+	config_get selected_workdir $CONFIGURATION workdir "/usr/bin/AdGuardHome"
+	case "$selected_workdir" in
+		/mnt/*)
+			selected_mount="/mnt/$(printf '%s' "${selected_workdir#/mnt/}" | cut -d/ -f1)"
+			grep -Fq " $selected_mount " /proc/mounts || {
+				logger -t AdGuardHome "$selected_mount is not mounted; start skipped"
+				return 1
+			}
+		;;
+	esac
 	# update password
 	config_get username $CONFIGURATION username ""
 	config_get hashpass $CONFIGURATION hashpass ""
