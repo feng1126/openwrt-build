@@ -288,7 +288,7 @@ o.optional = false
 s:tab("gfwlist", "GFW DNS 分流")
 
 o = s:taboption("gfwlist", Flag, "gfw_enabled", "启用 GFW DNS 分流",
-    "启用后默认走国内 DNS，GFW 域名走国外 DNS；.lan 仍使用本地 dnsmasq。")
+    "启用后默认走国内 DNS，GFW 域名走国外 DNS；.lan 也走国内上游，局域网主机名可能无法解析。")
 o.default = "0"
 o.rmempty = false
 

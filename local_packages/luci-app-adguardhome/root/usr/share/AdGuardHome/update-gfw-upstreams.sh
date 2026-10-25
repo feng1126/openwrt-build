@@ -42,7 +42,7 @@ fi
 if [ "$enabled" != 1 ]; then
     if grep '^  upstream_dns_file:' "$config" | grep -Fq "$rules"; then
         sed -i 's#^  upstream_dns_file:.*#  upstream_dns_file: ""#' "$config"
-        /etc/init.d/adguardhome restart
+        /etc/init.d/AdGuardHome restart
     fi
     exit 0
 fi
@@ -105,7 +105,7 @@ temporary="$scratch/upstreams"
 {
     for dns in $domestic; do printf '%s\n' "$dns"; done
     printf '[/cn/]%s\n' "$domestic"
-    printf '%s\n' '[/lan/]127.0.0.1:1745'
+    printf '[/lan/]%s\n' "$domestic"
     cat "$source_domains" "$remote_domains" 2>/dev/null | \
         awk '/^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$/ && /\./ { print tolower($0) }' | \
         sort -u | awk -v upstream="$foreign" '{print "[/" $0 "/]" upstream}'
@@ -130,11 +130,19 @@ if ! grep '^  upstream_dns_file:' "$config" | grep -Fq "$rules"; then
     changed=1
 fi
 
+# Remove the old local .lan override from AdGuard Home's YAML: it would
+# otherwise take precedence over the generated upstream file.
+if grep -Fq '[/lan/]127.0.0.1:1745' "$config"; then
+    cp -p "$config" "$config.before-gfw-switch"
+    sed -i '\#\[/lan/\]127\.0\.0\.1:1745#d' "$config"
+    changed=1
+fi
+
 if [ "$changed" = 1 ]; then
     if ! /usr/bin/AdGuardHome -c "$config" --check-config >/dev/null 2>&1; then
         [ -f "$config.before-gfw-switch" ] && cp -p "$config.before-gfw-switch" "$config"
         echo 'AdGuard Home configuration validation failed' >&2
         exit 1
     fi
-    /etc/init.d/adguardhome restart
+    /etc/init.d/AdGuardHome restart
 fi
