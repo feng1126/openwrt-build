@@ -237,6 +237,8 @@ main 分支保留官方 OpenWrt 底版，并通过 `scripts/apply-pon.py` 集成
 
 PON 补丁清理：不再重复覆盖官方已有的 pinctrl SCU 查找补丁；原生 L2B 布局修复已单独移植，但不启用实验桥接卸载。官方底版自带的相关补丁继续保留。PON 数据/控制通道、PCS/光模块 GPIO、PPE GEM/T-CONT 元数据、共享 QDMA/DMA、VLAN MTU、NPU mailbox 超时和外部 SerDes NBQ 修复保留，分别服务于光接入、数据通道正确性和驱动稳定性。
 
+PON 启动修复：同步 openwrt-pon-drivers 的 `383e43f3619e`，在数据通道未就绪时停止 TX 队列使用 `netif_tx_stop_all_queues()`，避免延迟探测阶段的 `netif_tx_disable()` 锁竞争导致启动卡住。上游驱动版本及文件校验值记录在 `patches/pon/sources.json`。
+
 2026-10-17 main 适配：使用上游新版 LRO、MIB 统计、BQL、skb 分片 DMA 和包含 VLAN 二层开销的 MTU 实现，移除重复补丁。重新合并 phylink/PCS 与 PON 控制、数据通道：OMCI/OAM 原始控制帧独立于以太网 LRO 接收；共享发送完成路径只对以太网私有结构访问 `txq_lock`，避免将控制接口私有数据当成以太网结构；保留 GEM/T-CONT/LLID 映射和配置去重。工作流下载内核后先以 `--fuzz=0` 验证完整内核补丁序列，再进入编译，日志为 `pon-kernel-patches.log`。此适配的实际光线路行为仍需新固件验证。
 
 PON 配置优化：在 `flow_offload_mutex` 内按字段比较业务映射和 QDMA 承载参数，相同配置不再替换映射、清除 PPE 表项或等待网络 RCU 同步。映射顺序及字段变化、清空和恢复业务仍按原路径处理；逐字段比较避免结构体填充字节影响判断。此优化减少重复配置的开销，不改变光线路检测、注册时序或动态 P-bit 卸载限制。验证命令：`python3 tests/test-pon-config-dedup.py`。实机性能收益仍需新固件负载测试。

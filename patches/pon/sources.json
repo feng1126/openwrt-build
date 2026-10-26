@@ -12,7 +12,7 @@
     },
     "drivers": {
       "url": "https://github.com/pbs05/openwrt-pon-drivers.git",
-      "commit": "e5194d2dfd169eef8f4a944fdc3f929e0287b680"
+      "commit": "2f248394e62648800ef8d03ded623eb6d6059597"
     },
     "userspace": {
       "url": "https://github.com/pbs05/openwrt-pon-userspace.git",
@@ -142,7 +142,7 @@
     "local_packages/pon/airoha-xpon/src/airoha-xpon-omci.h": "fe3b38ba7eea16002e1762e98e61a9d5510cc237604ff1f371c73399f1021344",
     "local_packages/pon/airoha-xpon/src/airoha-xpon-xgpon.h": "76993f0f8b950f99839b5fe912fc81e21363e2d8ad794efcb796d9dcec0a651c",
     "local_packages/pon/airoha-xpon/src/airoha-xpon-oam.c": "672d1378ee57d74f9e444dcec4c970e88fb5361f4d967ce0b1ad88037b5194d7",
-    "local_packages/pon/airoha-xpon/src/airoha-xpon-main.c": "3f1f02eacadd08d59ded16962b92234b27be6107ecd52a770abb3b40281cdbbe",
+    "local_packages/pon/airoha-xpon/src/airoha-xpon-main.c": "7b10e37f614c40612d0dea7a2404f2db0dd3010234ab098941654507ba5f73d9",
     "local_packages/pon/airoha-pon-debug/Makefile": "93e7f486a45cebb9c90b5c5a6ac5eaf002dce095fba42c200e599caaedc1d802",
     "local_packages/pon/airoha-pon-debug/files/airoha-pon-debug.init": "16a850e81f945152b9a0568c8682396e88917dc31b0a45f78ffadb868fa94345",
     "local_packages/pon/airoha-pon-debug/files/pon-debug": "54cecae1508bc34f8beea08e3375c0ba5fc7c9188272cbfa41df135e8df048b4",
