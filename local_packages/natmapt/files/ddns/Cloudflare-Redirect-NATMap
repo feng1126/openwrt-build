@@ -1,0 +1,54 @@
+#!/bin/bash
+set -euo pipefail
+. /usr/lib/natmap/common.sh
+payload=${1:?missing NATMap payload}
+tokens=$(jq -er '.tokens' <<< "$payload")
+INIT_GLOBAL_VAR TOKEN ZONE_ID
+eval "$tokens"
+[ -n "$TOKEN" ] && [ -n "$ZONE_ID" ] || exit 1
+host=$(jq -er '.host' <<< "$payload")
+ip=$(jq -er '.ip' <<< "$payload")
+port=$(jq -er '.port | select(. >= 1 and . <= 65535)' <<< "$payload")
+case "$host" in
+    code.fengown.top) rule_ref=natmap_codex_redirect ;;
+    home.fengown.top) rule_ref=natmap_home_redirect ;;
+    *) logger -t natmap-redirect "Unsupported hostname: $host"; exit 1 ;;
+esac
+case "$ip" in
+    *[!0-9.]*|'') exit 1 ;;
+esac
+base="https://api.cloudflare.com/client/v4/zones/$ZONE_ID"
+api() {
+    local method="$1" path="$2" data="${3:-}" result
+    local args=(-4 -sS --fail-with-body --connect-timeout 10 --max-time 40 --retry 2 -X "$method" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json')
+    [ -z "$data" ] || args+=(-d "$data")
+    result=$(curl "${args[@]}" "$base/$path") || return 1
+    jq -e '.success == true' <<< "$result" >/dev/null || { logger -t natmap-redirect "$(jq -c '.errors' <<< "$result")"; return 1; }
+    printf '%s' "$result"
+}
+records=$(api GET "dns_records?type=A&name=$host")
+record_id=$(jq -r --arg host "$host" '.result[] | select(.name == $host) | .id' <<< "$records" | head -n 1)
+record=$(jq -nc --arg host "$host" '{type:"A",name:$host,content:"192.0.2.1",ttl:1,proxied:true}')
+if [ -n "$record_id" ]; then
+    current=$(jq -c --arg id "$record_id" '.result[] | select(.id == $id) | {content,proxied}' <<< "$records")
+    [ "$current" = '{"content":"192.0.2.1","proxied":true}' ] || api PUT "dns_records/$record_id" "$record" >/dev/null
+else
+    api POST dns_records "$record" >/dev/null
+fi
+sets=$(api GET rulesets)
+ruleset_id=$(jq -r '.result[] | select(.phase == "http_request_dynamic_redirect" and .kind == "zone") | .id' <<< "$sets" | head -n 1)
+target=$(jq -nr --arg ip "$ip" --arg port "$port" '"concat(\"http://" + $ip + ":" + $port + "\", http.request.uri.path)"')
+rule=$(jq -nc --arg host "$host" --arg target "$target" --arg ref "$rule_ref" '{ref:$ref,description:("NATMap " + $host + " redirect"),expression:("(http.host eq \""+$host+"\")"),action:"redirect",action_parameters:{from_value:{status_code:307,preserve_query_string:true,target_url:{expression:$target}}},enabled:true}')
+if [ -z "$ruleset_id" ]; then
+    data=$(jq -nc --argjson rule "$rule" '{name:"NATMap redirects",kind:"zone",phase:"http_request_dynamic_redirect",rules:[$rule]}')
+    api POST rulesets "$data" >/dev/null
+else
+    rules=$(api GET "rulesets/$ruleset_id")
+    rule_id=$(jq -r --arg ref "$rule_ref" '.result.rules[]? | select(.ref == $ref) | .id' <<< "$rules" | head -n 1)
+    if [ -n "$rule_id" ]; then
+        api PATCH "rulesets/$ruleset_id/rules/$rule_id" "$rule" >/dev/null
+    else
+        api POST "rulesets/$ruleset_id/rules" "$rule" >/dev/null
+    fi
+fi
+logger -t natmap-redirect "Updated $host to $ip:$port"

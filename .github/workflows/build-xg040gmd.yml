@@ -311,6 +311,7 @@ jobs:
           grep -qx 'CONFIG_TARGET_airoha_an7581_DEVICE_nokia_xg-040g-md-ubi=y' openwrt/.config
           grep -qx 'CONFIG_PACKAGE_odhcp6c=y' openwrt/.config
           bash -n local_packages/natmapt/files/ddns/Cloudflare-Origin
+          bash -n local_packages/natmapt/files/ddns/Cloudflare-Redirect-NATMap
           mkdir -p openwrt/files
           # NPU firmware must come from the official linux-firmware package.
           test ! -e files/lib/firmware/airoha/en7581_npu_data.bin
