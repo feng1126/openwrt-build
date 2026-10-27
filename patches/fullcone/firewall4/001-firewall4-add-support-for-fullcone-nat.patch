@@ -199,6 +199,6 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  
 -		if ((zone.auto_helper && !(zone.masq || zone.masq6)) || length(zone.helper)) {
 +		if ((zone.auto_helper && !(zone.masq || zone.masq6 || this.state.defaults.fullcone || this.state.defaults.fullcone6)) || length(zone.helper)) {
- 			zone.dflags.helper = true;
+			zone.dflags.helper = false;
  
- 			for (let helper in (length(zone.helper) ? zone.helper : this.state.helpers)) {
+			for (let helper in (length(zone.helper) ? zone.helper : this.state.helpers)) {
