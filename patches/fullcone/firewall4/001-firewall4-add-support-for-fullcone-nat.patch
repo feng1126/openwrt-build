@@ -146,14 +146,16 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  	parse_policy: function(val) {
  		return this.parse_enum(val, [
  			"accept",
-@@ -1475,6 +1523,7 @@ return {
+@@ -1533,8 +1581,9 @@ return {
  			"dnat",
  			"snat",
  			"masquerade",
+ 			"npt",
 +			"fullcone",
  			"accept",
  			"reject",
  			"drop"
+ 		]);
 @@ -1946,6 +1995,8 @@ return {
  		}
  
