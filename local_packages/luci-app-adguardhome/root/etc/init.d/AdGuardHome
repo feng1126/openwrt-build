@@ -206,6 +206,9 @@ _do_redirect()
 		start_forward_dnsmasq
 	elif [ "$redirect" == "exchange" -a "$(uci get dhcp.@dnsmasq[0].port 2>/dev/null)" == "53" ]; then
 		use_port53
+	elif [ "$redirect" == "exchange" -a "$(uci get dhcp.@dnsmasq[0].port 2>/dev/null)" == "1745" \
+		-a "$(config_editor "dns.port" "" "$configpath" "1")" == "53" ]; then
+		: # Port exchange is already active after reboot.
 	else
 		redirected=0
 	fi
