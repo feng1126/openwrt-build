@@ -59,12 +59,15 @@ define_nic() {
 define_nic
 
 load_interfaces() {
-	local bind_ifname enable
+	local bind_ifname enable matches
 
 	config_get bind_ifname "$1" bind_ifname
 	config_get_bool enable "$1" enable 0
 
-	[ "$enable" = 1 ] && interfaces=" $(uci -q show network|grep "device='$bind_ifname'"|cut -f2 -d'.') $interfaces"
+	[ "$enable" = 1 ] || return 0
+	[ -n "$bind_ifname" ] || return 0
+	matches=$(uci -q show network | grep "device='$bind_ifname'" | cut -f2 -d'.')
+	[ -n "$matches" ] && interfaces="$interfaces $matches"
 }
 
 # define global var: GLOBAL_*
@@ -426,6 +429,10 @@ launcher() {
 
 service_triggers() {
 	procd_add_reload_trigger "$NAME" 'network'
+	# PPPoE's runtime device (pppoe-wan) differs from network.wan.device (lan1).
+	# Subscribe to the logical WAN interfaces so a late connection starts instances.
+	procd_add_reload_interface_trigger wan
+	procd_add_reload_interface_trigger wan6
 
 	local interfaces
 
