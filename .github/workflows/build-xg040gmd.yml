@@ -221,6 +221,9 @@ jobs:
             CONFIG_PACKAGE_kmod-airoha-xpon \
             CONFIG_PACKAGE_kmod-airoha-pon-frontend \
             CONFIG_PACKAGE_kmod-airoha-en7572 \
+            CONFIG_PACKAGE_kmod-rtw88-8812au \
+            CONFIG_PACKAGE_rtl8812a-firmware \
+            CONFIG_PACKAGE_iw \
             CONFIG_PACKAGE_airoha-ponctl \
             CONFIG_PACKAGE_airoha-pond \
             CONFIG_PACKAGE_airoha-pon-debug \
