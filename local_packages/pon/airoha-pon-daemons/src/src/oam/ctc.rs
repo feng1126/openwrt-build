@@ -468,17 +468,7 @@ impl CtcSession {
         }
 
         match leaf {
-            LEAF_ONU_SN if object.is_none() => {
-                let mut value = fixed_width(&config.vendor_id, 4);
-                value.extend_from_slice(&fixed_width(&config.model, 4));
-                value.extend_from_slice(&source_mac);
-                value.extend_from_slice(&fixed_width(&config.hardware_version, 8));
-                value.extend_from_slice(&fixed_width(&config.software_version, 16));
-                if self.selected_version.unwrap_or(0) >= 0x30 {
-                    value.extend_from_slice(&fixed_width(&config.equipment_id, 16));
-                }
-                Ok(value)
-            }
+            LEAF_ONU_SN if object.is_none() => Ok(config.onu_serial(source_mac).to_vec()),
             LEAF_FIRMWARE_VERSION if object.is_none() => {
                 Ok(config.firmware_version.iter().copied().take(127).collect())
             }
